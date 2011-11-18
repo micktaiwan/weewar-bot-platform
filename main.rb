@@ -12,6 +12,7 @@ require 'version'
 # = command line to Weewar
 class WeewarCommand
 
+  include Weewar
   CLIST = [
     'help', 'user', 'ugames', 'gstate', 'mygames', 'ogames', 'analyse'
     ].sort
@@ -74,7 +75,7 @@ class WeewarCommand
     puts
     puts "Settings"
     puts "========"
-    puts "The key.txt file content must be login:key, where login is your bot name ('ai_xxxx') and key your API Key that you got on the Weewar site"
+    puts "The accounts.txt file content must be name:login:key, where login is your bot name ('ai_xxxx') and key your API Key that you got on the Weewar site. The name is a name for the account that you can choose"
   end
 
 end

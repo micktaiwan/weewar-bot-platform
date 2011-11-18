@@ -1,3 +1,3 @@
-require 'specs/game_state'
+require 'specs/game'
 require 'specs/map'
 

@@ -35,20 +35,24 @@ class XmlData
   end
 
 end
-
 module Utils
 
   # the global logguer
   @log      = Logger.new('log.txt')
 
-  # set your developper key in the file ./key.txt
-  arr = File.open('./key.txt','r').read.split(':')
-  @credentials = {:login=>arr[0].strip, :key=>arr[1].strip}
+  # set your login / developper key in the file ./accounts.txt
+  @credentials = []
+  File.open('./accounts.txt','r').each_line { |line|
+    arr = line.split(':')
+    @credentials << {:name=>arr[0].strip,:login=>arr[1].strip, :key=>arr[2].strip}
+    }
+  @cred_index = 1
 
   BASEURL = 'weewar.com'
 
+  # TODO: some switching account function
   def self.credentials
-    @credentials
+    @credentials[@cred_index]
   end
 
   def self.log_debug(msg)
@@ -60,7 +64,7 @@ module Utils
     @log.debug method
     Net::HTTP.start(BASEURL) do |http|
       req = Net::HTTP::Get.new("/api1/#{method}")
-      req.basic_auth(@credentials[:login], @credentials[:key])
+      req.basic_auth(@credentials[@cred_index][:login], @credentials[@cred_index][:key])
       tag(http.request(req)) { |r| # returns a response (check response.code before reading response.body)
         @log.debug "[#{r.code},#{r.body}]"
         }

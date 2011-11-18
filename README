@@ -13,8 +13,15 @@ Setup
 Install XmlSimple
   gem install 'xml-simple'
 
-Edit a "key.txt" file in the weewar directory and write your login and development key in it as "login:key"
-  for example: ai_Daydz:8f9t6U5Fnkuede23z79iRcmBn
+Edit a "accounts.txt" file in the weewar directory and write your login and development key in it as "name:login:key"
+an account by line.
+  for example:
+  a:ai_Daydz:8f9t6U5Fnkuede23z79iRcmBn
+  o:ai_Other:3d26h8jU5Fnku23z79is8y7T
+
+The important part is the login:key.
+The name will be used to switch account easily.
+You can choose what you want as a name.
 
 to start a interatice prompt
   ruby main.rb
