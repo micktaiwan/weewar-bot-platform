@@ -1,3 +1,6 @@
+# lot of code by Pistos:
+# https://github.com/Pistos/weewar-ai
+
 require 'utils'
 
 module Weewar

@@ -28,9 +28,16 @@ to start a interatice prompt
 to start the bot alone
   ruby weewar.rb
 
+Thanks
+======
+
+lot of code by Pistos:
+  https://github.com/Pistos/weewar-ai
+
+
 TODO
 ====
 
-- Code AI !
 - Send a command
+- Code AI !
 
