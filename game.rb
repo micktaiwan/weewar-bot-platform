@@ -2,6 +2,9 @@
 # https://github.com/Pistos/weewar-ai
 
 require 'utils'
+require 'player'
+require 'faction'
+require 'unit'
 
 module Weewar
 
@@ -21,62 +24,83 @@ module Weewar
     def initialize(game_id=nil, options={})
       @method = 'gamestate'
       @id     = game_id
-      super(options)
-      #refresh
+      if options[:local_game]
+        super()
+        self.data  = File.open(File.dirname(__FILE__) + "/specs/game_running.xml",'r').read
+      else
+        super(options, { 'ForceArray' => ['faction', 'player', 'terrain', 'unit'], })
+      end
+      @map    = Map.new(self[:map].to_i, {:local_game=>options[:local_game],:get=>true}) if !@map
+      refresh
     end
 
-    alias pendingInvites pending_invites
-    alias mapUrl map_url
-    alias creditsPerBase credits_per_base
-    alias initialCredits initial_credits
-    alias playingSince playing_since
+    def me_to_play?
+      p = get_player(login)
+      raise "can't find player #{p}" if !p
+      p(p)
+      p['current'] ? true : false
+    end
+
+    def get_player(name)
+      puts name
+      self[:players]['player'].each { |p|
+        return p if p['content'] == name
+        }
+      nil
+    end
+
+    # The Player whose turn it is.
+    #   turn_taker = game.current_player
+    #def current_player
+    #  @players.find { |p| p.current? }
+    #end
+
+
+    #alias pendingInvites pending_invites
+    #alias mapUrl map_url
+    #alias creditsPerBase credits_per_base
+    #alias initialCredits initial_credits
+    #alias playingSince playing_since
 
     # Hits the weewar server for all the game state data as it sees it.
     # All internal variables are updated to match.
     #   my_game.refresh
     def refresh
-      xml = XmlSimple.xml_in(
-        WeewarAI::API.get( "/gamestate/#{id}" ),
-        { 'ForceArray' => [ 'faction', 'player', 'terrain', 'unit' ], }
-      )
-      #$stderr.puts xml.nice_inspect
-      @name = xml[ 'name' ]
-      @round = xml[ 'round' ].to_i
-      @state = xml[ 'state' ]
-      @pending_invites = ( xml[ 'pendingInvites' ] == 'true' )
-      @pace = xml[ 'pace' ].to_i
-      @type = xml[ 'type' ]
-      @url = xml[ 'url' ]
-      @players = xml[ 'players' ][ 'player' ].map { |p| WeewarAI::Player.new( p ) }
-      @map = WeewarAI::Map.new( self, xml[ 'map' ].to_i )
-      @map_url = xml[ 'mapUrl' ]
-      @credits_per_base = xml[ 'creditsPerBase' ]
-      @initial_credits = xml[ 'initialCredits' ]
-      @playing_since = Time.parse( xml[ 'playingSince' ] )
+      @name   = self['name']
+      @round  = self['round'].to_i
+      @state  = self['state']
+      @pending_invites = ( self['pendingInvites'] == 'true' )
+      @pace   = self['pace'].to_i
+      @type   = self['type']
+      @url    = self['url']
+      @players = self['players']['player'].map { |p| Player.new(p) }
+      @credits_per_base = self['creditsPerBase']
+      @initial_credits = self['initialCredits']
+      @playing_since = Time.parse( self['playingSince'] )
 
       @units = Array.new
       @factions = Array.new
-      xml[ 'factions' ][ 'faction' ].each_with_index do |faction_xml,ordinal|
+      self['factions']['faction'].each_with_index do |faction_xml,ordinal|
         faction = Faction.new( self, faction_xml, ordinal )
         @factions << faction
 
-        faction_xml[ 'unit' ].each do |u|
-          hex = @map[ u[ 'x' ], u[ 'y' ] ]
+        faction_xml['unit'].each do |u|
+          hex = @map.hex(u['x'], u['y'])
           unit = Unit.new(
             self,
             hex,
             faction,
-            u[ 'type' ],
-            u[ 'quantity' ].to_i,
-            u[ 'finished' ] == 'true',
-            u[ 'capturing' ] == 'true'
+            u['type'],
+            u['quantity'].to_i,
+            u['finished'] == 'true',
+            u['capturing'] == 'true'
           )
           @units << unit
           hex.unit = unit
         end
 
-        faction_xml[ 'terrain' ].each do |terrain|
-          hex = @map[ terrain[ 'x' ], terrain[ 'y' ] ]
+        faction_xml['terrain'].each do |terrain|
+          hex = @map.hex(terrain['x'], terrain['y'])
           if hex.type == :base
             hex.faction = faction
           end
@@ -87,8 +111,8 @@ module Weewar
     # Sends some command XML for this game to the server.  You should
     # generally never need to call this method directly; it is used
     # internally by the Game class.
-    def send( command_xml )
-      WeewarAI::API.send "<weewar game='#{@id}'>#{command_xml}</weewar>"
+    def send(xml_command)
+      Utils.send "<weewar game='#{@id}'>#{xml_command}</weewar>"
     end
 
     #-- -------------------------
@@ -114,16 +138,6 @@ module Weewar
       send "<abandon/>"
     end
 
-    #-- -------------------------
-    # Game state
-    #++
-
-    # The Player whose turn it is.
-    #   turn_taker = game.current_player
-    def current_player
-      @players.find { |p| p.current? }
-    end
-
     #-- --------------------------------------------------
     # Utilities
     #++
@@ -141,7 +155,7 @@ module Weewar
     #     my_base.build :htank
     #   end
     def my_faction
-      faction_for_player WeewarAI::API.username
+      faction_for_player(login)
     end
 
     # An Array of the Units not belonging to your AI.
@@ -174,6 +188,11 @@ module Weewar
       @map.bases.find_all { |b| b.faction != my_faction }
     end
 
+protected
+
+    def login
+      Utils.credentials[:login]
+    end
   end
 
 end

@@ -11,8 +11,8 @@
 <since>1 hour 53 minutes</since>
 <sinceSeconds>6788</sinceSeconds>
 <players>
-<player index="0" current="true">arthurfm70</player>
-<player index="1">MickTaiwan</player>
+<player index="0">arthurfm70</player>
+<player index="1" current="true">MickTaiwan</player>
 </players>
 <disabledUnitTypes>
 <type>Heavy Trooper</type>

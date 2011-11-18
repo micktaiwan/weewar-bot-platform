@@ -14,7 +14,7 @@ class WeewarCommand
 
   include Weewar
   CLIST = [
-    'help', 'user', 'ugames', 'gstate', 'mygames', 'ogames', 'analyse'
+    'help', 'user', 'ugames', 'gstate', 'mygames', 'ogames', 'analyse 338663'
     ].sort
 
   def initialize
@@ -39,7 +39,7 @@ class WeewarCommand
           when input=="help"
             print_help
           when input[0..6]=="analyse"
-            p @ww.start_game(input[8..-1], {:analyse=>true})
+            p @ww.play(input[8..-1], {:analyse_only=>true})
           when input[0..5]=="gstate"
             r = @ww.game_state(input[7..-1])
             puts r.body if r.code=="200"

@@ -5,6 +5,9 @@
 
 require 'bot'
 
+# comment out to play online
+$local_game = true
+
 module Weewar
 
   # = Manage Weewar gameswith some utilities
@@ -25,8 +28,8 @@ module Weewar
     # will play a game
     # @param [String] id: the game id
     # @param [Hash]   options: See Bot class
-    def start_game(id, options={})
-      (find(id) || add_bot(id)).start_game(options)
+    def play(id, options={})
+      (find(id) || add_bot(id)).play(options)
     end
 
     def add_bot(id)
