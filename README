@@ -16,3 +16,11 @@ for example: Daydz:8f9t6U5Fnkuede23z79iRcmBn
 ruby main.rb to start a interatice prompt
 ruby weewar.rb to start the bot alone
 
+TODO
+====
+
+- Read a map
+- Read a state game
+- Send a command
+- Code AI !
+
