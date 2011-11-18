@@ -14,7 +14,7 @@ Install XmlSimple
   gem install 'xml-simple'
 
 Edit a "key.txt" file in the weewar directory and write your login and development key in it as "login:key"
-  for example: Daydz:8f9t6U5Fnkuede23z79iRcmBn
+  for example: ai_Daydz:8f9t6U5Fnkuede23z79iRcmBn
 
 to start a interatice prompt
   ruby main.rb
