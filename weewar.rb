@@ -56,3 +56,9 @@ class Weewar
 
 end
 
+
+if __FILE__ == $0
+  puts "standalone mode not implemented yet"
+  puts "run ruby main.rb for an interactive prompt"
+end
+

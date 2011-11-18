@@ -1,0 +1,20 @@
+Weewar Bot Platform
+===================
+
+For now, there is no much to see.
+
+Later a bot will be created to play on weewar.com
+Later this will become a platform to develop Bot
+Later I will be happy
+Later I will code something else.
+But now, let's code !
+
+Setup
+=====
+
+Edit a "key.txt" file in the weewar directory and write your login and development key in it as "login:key"
+for example: Daydz:8f9t6U5Fnkuede23z79iRcmBn
+
+ruby main.rb to start a interatice prompt
+ruby weewar.rb to start the bot alone
+
