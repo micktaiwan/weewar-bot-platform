@@ -1,0 +1,83 @@
+<game id="338541">
+  <id>338541</id>
+  <name>Arthur</name>
+  <round>20</round>
+  <state>finished</state>
+  <pendingInvites>false</pendingInvites>
+  <pace>259200</pace>
+  <type>Pro</type>
+  <url>http://weewar.com/game/338541</url>
+  <rated>true</rated>
+  <since>34 minutes</since>
+  <sinceSeconds>2057</sinceSeconds>
+  <players>
+    <player index="0" result="surrendered">MickTaiwan</player>
+    <player index="1" result="victory">arthurfm70</player>
+  </players>
+  <disabledUnitTypes>
+    <type>Helicopter</type>
+    <type>Berserker</type>
+    <type>Assault Artillery</type>
+    <type>Submarine</type>
+    <type>Heavy Tank</type>
+    <type>Anti Aircraft</type>
+    <type>Destroyer</type>
+    <type>Speedboat</type>
+    <type>Bomber</type>
+    <type>Heavy Artillery</type>
+    <type>Heavy Trooper</type>
+    <type>DFA</type>
+    <type>Jet</type>
+    <type>Battleship</type>
+    <type>Hovercraft</type>
+  </disabledUnitTypes>
+  <map>38234</map>
+  <mapUrl>http://weewar.com/map/38234</mapUrl>
+  <creditsPerBase>100</creditsPerBase>
+  <initialCredits>200</initialCredits>
+  <playingSince>Thu Nov 17 18:31:57 UTC 2011</playingSince>
+  <playingSinceMillis>1321554717285</playingSinceMillis>
+  <factions>
+    <faction credits="150" type="user" emailNotify="false" playerId="102445" playerName="MickTaiwan" offerPeace="false" state="finished" result="surrendered" waivedRematch="true">
+      <unit x="1" y="3" type="Tank" quantity="4" finished="false"/>
+      <unit x="2" y="3" type="Tank" quantity="9" finished="false"/>
+      <unit x="3" y="2" type="Tank" quantity="9" finished="false"/>
+      <unit x="3" y="4" type="Tank" quantity="10" finished="false"/>
+      <terrain x="1" y="5" type="Base" finished="false"/>
+      <terrain x="2" y="2" type="Base" finished="false"/>
+      <terrain x="3" y="1" type="Base" finished="false"/>
+      <terrain x="3" y="4" type="Base" finished="false"/>
+    </faction>
+    <faction current="true" playerId="102472" playerName="arthurfm70" offerPeace="false" state="deleted" result="victory" waivedRematch="false">
+      <unit x="1" y="4" type="Tank" quantity="4" finished="false"/>
+      <unit x="1" y="5" type="Trooper" quantity="10" capturing="true" capturingGrade="14" finished="false"/>
+      <unit x="2" y="4" type="Trooper" quantity="2" finished="false"/>
+      <unit x="2" y="5" type="Trooper" quantity="10" finished="false"/>
+      <unit x="3" y="3" type="Tank" quantity="2" finished="false"/>
+      <unit x="3" y="5" type="Light Artillery" quantity="10" finished="false"/>
+      <unit x="3" y="7" type="Light Artillery" quantity="10" finished="false"/>
+      <unit x="4" y="3" type="Trooper" quantity="10" finished="false"/>
+      <unit x="4" y="4" type="Light Artillery" quantity="3" finished="false"/>
+      <unit x="4" y="5" type="Light Artillery" quantity="10" finished="false"/>
+      <unit x="4" y="6" type="Trooper" quantity="10" finished="false"/>
+      <unit x="4" y="7" type="Trooper" quantity="10" finished="false"/>
+      <unit x="5" y="3" type="Trooper" quantity="7" finished="false"/>
+      <unit x="5" y="4" type="Tank" quantity="10" finished="false"/>
+      <unit x="5" y="5" type="Trooper" quantity="10" finished="false"/>
+      <unit x="5" y="6" type="Trooper" quantity="10" finished="false"/>
+      <unit x="6" y="1" type="Tank" quantity="10" finished="false"/>
+      <unit x="6" y="2" type="Light Artillery" quantity="10" finished="false"/>
+      <unit x="6" y="4" type="Light Artillery" quantity="5" finished="false"/>
+      <unit x="6" y="6" type="Light Artillery" quantity="10" finished="false"/>
+      <unit x="7" y="3" type="Trooper" quantity="10" finished="false"/>
+      <unit x="7" y="6" type="Trooper" quantity="10" finished="false"/>
+      <unit x="9" y="4" type="Light Artillery" quantity="10" finished="false"/>
+      <terrain x="1" y="7" type="Base" finished="false"/>
+      <terrain x="6" y="8" type="Base" finished="false"/>
+      <terrain x="8" y="4" type="Base" finished="false"/>
+      <terrain x="8" y="7" type="Base" finished="false"/>
+      <terrain x="9" y="1" type="Base" finished="false"/>
+      <terrain x="9" y="6" type="Base" finished="false"/>
+    </faction>
+  </factions>
+</game>
