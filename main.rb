@@ -13,7 +13,7 @@ require 'version'
 class WeewarCommand
 
   CLIST = [
-    'help', 'user', 'ugames', 'gstate', 'games'
+    'help', 'user', 'ugames', 'gstate', 'mygames', 'ogames', 'analyse'
     ].sort
 
   def initialize
@@ -37,13 +37,17 @@ class WeewarCommand
             exit
           when input=="help"
             print_help
+          when input[0..6]=="analyse"
+            p @ww.start_game(input[8..-1], {:analyse=>true})
           when input[0..5]=="gstate"
             r = @ww.game_state(input[7..-1])
             puts r.body if r.code=="200"
-          when input[0..8]=="ugames"
-            puts @ww.user_games(input[10..-1]).join(', ')
-          when input=="games"
-            puts @ww.games.join(', ')
+          when input[0..5]=="ugames"
+            p @ww.user_games(input[7..-1])
+          when input=="mygames"
+            p @ww.my_games
+          when input=="ogames"
+            p @ww.get_open_games
           when input[0..3]=="user"
             puts @ww.user(input[5..-1]).body
           when input==""

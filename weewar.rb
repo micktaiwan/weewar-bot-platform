@@ -11,25 +11,38 @@ require 'bot'
 # Each game is played each after another.
 class Weewar
 
-  attr_accessor :bot
-
   def initialize
-    @bot = Bot.new
+    @bots = []
   end
 
   # @return [Array] an array of user game ids
-  def games
+  def my_games
     user_games(Utils.credentials[:login])
+  end
+
+  # will play a game
+  # @param [String] id: the game id
+  # @param [Hash]   options: See Bot class
+  def start_game(id, options={})
+    (find(id) || add_bot(id)).start_game(options)
+  end
+
+  def add_bot(id)
+    tag(Bot.new(id)) { |b| @bots << b }
+  end
+
+  def find(id)
+    @bots.each { |b|
+      return b if b.game_id == id
+      }
+    nil
   end
 
   # @return [Array] an array of user game ids
   def user_games(name)
     r = user(name)
     return if r.code!="200"
-    doc = REXML::Document.new(r.body)
-    tag([]) do |games|
-      doc.elements.each('user/games/game') { |g| games << g.text.to_i }
-    end
+    Utils.xmls(r.body)['games']
   end
 
   # @return [HTTPResponse] a response with the user full xml
@@ -49,9 +62,9 @@ class Weewar
   # get open games (not started yet games)
   # @return [HTTPResponse] xml
   def get_open_games
-    tag(Utils.get("games/open")) { |r|
-      puts r.message if r.code!="200"
-      }
+    r = Utils.get("games/open")
+    raise r.message if r.code!="200"
+    Utils.xmls(r.body, { 'GroupTags' => { 'game' => 'id' }})
   end
 
 end

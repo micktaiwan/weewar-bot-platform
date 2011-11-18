@@ -10,17 +10,20 @@ But now, let's code !
 Setup
 =====
 
-Edit a "key.txt" file in the weewar directory and write your login and development key in it as "login:key"
-for example: Daydz:8f9t6U5Fnkuede23z79iRcmBn
+Install XmlSimple
+  gem install 'xml-simple'
 
-ruby main.rb to start a interatice prompt
-ruby weewar.rb to start the bot alone
+Edit a "key.txt" file in the weewar directory and write your login and development key in it as "login:key"
+  for example: Daydz:8f9t6U5Fnkuede23z79iRcmBn
+
+to start a interatice prompt
+  ruby main.rb
+to start the bot alone
+  ruby weewar.rb
 
 TODO
 ====
 
-- Read a map
-- Read a state game
-- Send a command
 - Code AI !
+- Send a command
 

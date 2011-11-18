@@ -1,28 +1,41 @@
 require 'net/http'
 require 'utils'
+require 'game_state'
+require 'map'
 
 # = Weevar Bot
-# Manage a game.
+# Play a game
 class Bot
 
-  def initialize
-  end
-
-  def start_game(game_id)
+  def initialize(game_id)
     @game_id  = game_id
-    @map      = Map.new(game_id)
+    @map      = nil
+    @states   = []
   end
 
-  # get the current game state
-  # @return [string] xml
-  def get_game_state
-    Utils.get("gamestate/#{@game_id}")
+  # @param [Hash]   options: analyse=>true: will not send any command to the server
+  def start_game(options)
+    s = add_state
+    @map      = Map.new(s[:map], {:get=>true}) if !@map
+    play
   end
 
-  # @private does not work
-  #def get_game_status(game_id=@game_id)
-  #  get("game/#{game_id}")
-  #end
+  # @return a state, newly created and initialized with data
+  def add_state
+    # TODO: check if getting a new state is necessary
+    tag(GameState.new(@game_id, {:get=>true})) { |s|
+      @states << s
+      }
+  end
+
+  def play
+    # find he we can play
+    s = @states.last
+    puts "Game #{@game_id} (map #{@map[:id]}: #{@map[:name]}) is #{s[:state]}"
+    return if s[:state].to_s != 'running'
+    puts "Players:"
+    p s[:players]['player']
+  end
 
 end
 
