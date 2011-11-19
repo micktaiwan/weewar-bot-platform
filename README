@@ -1,10 +1,10 @@
 Weewar Bot Platform
 ===================
 
-For now, there is no much to see.
+For now, it is just a Weewar bot doing nothing but a very basic and lame strategy.
+Later this will become a platform to develop Weewar Bots (I hope!)
+with its own programmation language. See my othre project Calculette for an example.
 
-Later a bot will be created to play on weewar.com
-Later this will become a platform to develop Weewar Bots
 But now, let's code !
 
 Statuts
@@ -51,7 +51,6 @@ lot of code by Pistos:
 TODO
 ====
 
-
 - pretty print for hashes and arrays (does Calculette has this already?)
 - Handle error While playing: Failed to execute:
   <unit x='0' y='4'><move x='1' y='3'/></unit>
@@ -66,7 +65,8 @@ TODO
   if pathfinder can't find a way because of a movable unit, it shall find the target closest hex to go.
   or at least there should be an options for.
 - better pathfinding, take into account the terrains
-- Code AI !
+- put all sources in lib/
+- Code AI ! based on Bot.rb
 - stop calling helping methods from weewawr.com, the bot shall calculate all by itself
 
 Questions:

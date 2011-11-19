@@ -182,10 +182,7 @@ module Weewar
 end
 
 if __FILE__ == $0
-  puts "standalone mode not implemented yet"
-  puts "run ruby main.rb for an interactive prompt"
   w = Weewar::Weewar.new
-  #w.play(338663, {:analyse_only=>true})
   w.do_loop
 end
 
