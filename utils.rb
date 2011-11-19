@@ -59,7 +59,7 @@ module Weewar
         arr = line.split(':')
         @credentials << {:name=>arr[0].strip,:login=>arr[1].strip, :key=>arr[2].strip}
         }
-      @cred_index = 1
+      @cred_index = 0
       Hex.initialize_specs
     end
 

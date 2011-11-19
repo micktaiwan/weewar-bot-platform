@@ -48,28 +48,50 @@ module Weewar
                 end
               end
             when 'running'
+              if g['factionState'] == "created"
+                accept_invitation(g['id'])
+                puts '  accepted'
+              end
               if g['inNeedOfAttention'] == "true"
                 puts '  will play'
-                play(g['id'])
+                begin
+                  play(g['id'])
+                rescue Exception=>e
+                  b = find(g['id'])
+                  if b
+                    b.game.chat("Ooops. Finishing my turn due to this error: #{e.message}")
+                    b.game.finish_turn
+                  end
+                  puts "While playing: #{e.message}"
+                  puts e.backtrace
+                  puts "game data is:"
+                  p g
+                end
                 just_played = true
               else
                 puts '  not my turn'
               end
             when 'finished'
-              puts '  removing'
-              remove_game(g['id'])
+            #  puts '  removing'
+            #  remove_game(g['id'])
             else
               puts "don't know how to handle this state: #{g['state']}"
             end
             }
+          secs = 60
+          puts "Sleeping #{secs}s..."
+          sleep(secs)
+        rescue Interrupt=>e # Ctrl-C
+          puts "type exit to exit, anything else to loop"
+          i = gets.chomp
+          break if i == "exit"
         rescue Exception=>e
           puts "ERROR: #{e.message}"
-        end
-        secs = 60
-        puts "Sleeping #{secs}s..."
-        sleep(secs)
-      end
-    end
+          puts e.backtrace
+          sleep(60)
+        end # begin
+      end # loop
+    end # do_loop
 
     # Accepts an invitation to a game.
     def accept_invitation( game_id )
@@ -107,7 +129,10 @@ module Weewar
     end
 
     def add_bot(id)
-      tag(Bot.new(id)) { |b| @bots << b }
+      tag(Bot.new(id)) { |b|
+        b.game.chat("I'm up again!")
+        @bots << b
+        }
     end
 
     def find(id)

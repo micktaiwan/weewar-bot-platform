@@ -21,28 +21,32 @@ module Weewar
     # Instantiate a new Game instance corresponding to the weewar game
     # with the given id number.
     #   game = WeewarAI::Game.new( 132 )
-    def initialize(game_id=nil, options={})
+    def initialize(game_id, options={})
       @method = 'gamestate'
       @id     = game_id
+      @xml_options = {'ForceArray' => ['faction', 'player', 'terrain', 'unit']}
       if options[:local_game]
-        super({:data=>File.open(File.dirname(__FILE__) + "/specs/game_for_testing.xml",'r').read},
-          {'ForceArray' => ['faction', 'player', 'terrain', 'unit']})
+        super({:data=>File.open(File.dirname(__FILE__) + "/specs/game_for_testing.xml",'r').read}, @xml_options)
       else
-        super(options, { 'ForceArray' => ['faction', 'player', 'terrain', 'unit'], })
+        super(options, @xml_options)
       end
       @map    = Map.new(self, self[:map].to_i, options) if !@map
       refresh
     end
 
+    # TODO
     def me_to_play?
-      p = get_player(login)
-      raise "can't find player #{login}" if !p
-      p['current'] ? true : false
+      player = get_player(login)
+      if !player
+        p self.data
+        raise "can't find player #{login}"
+      end
+      player['current'] ? true : false
     end
 
     def get_player(name)
-      self[:players]['player'].each { |p|
-        return p if p['content'] == name
+      self[:factions]['faction'].each { |p|
+        return p if p['playerName'] == name
         }
       nil
     end
@@ -63,6 +67,7 @@ module Weewar
     # All internal variables are updated to match.
     #   my_game.refresh
     def refresh
+      get(@xml_options)
       @name   = self['name']
       @round  = self['round'].to_i
       @state  = self['state']
@@ -115,6 +120,11 @@ module Weewar
     #-- -------------------------
     # API Commands
     #++
+
+    def chat(str)
+      p send "<chat>#{str}</chat>"
+    end
+
 
     # End turn in this game.
     #   game.finish_turn

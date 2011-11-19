@@ -9,20 +9,22 @@ module Weewar
   # Play a given game
   class Bot
 
-    attr_reader :game_id
+    attr_reader :game_id, :game
 
     def initialize(game_id)
       @game_id  = game_id
-      @states   = []
+      @game     = Game.new(@game_id, {:local_game=>$local_game, :get=>!$local_game})
+      #@states   = []
     end
 
     # @param [Hash] options
     # Options:
     # *  :analyse_only=>true: will not send any command to the server
     def play(options)
-      s = add_state
+      #s = add_state
       # find he we can play
-      s = @states.last
+      #s = @states.last
+      s = @game
       puts "  Game #{@game_id} (map #{s.map[:id]}: #{s[:name]}) is #{s[:state]}"
       return if s[:state].to_s != 'running'
       puts "  Players: #{s[:players]['player'].map{|h| h['content']}.join(', ')}"

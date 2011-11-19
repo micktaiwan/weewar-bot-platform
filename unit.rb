@@ -413,7 +413,7 @@ module Weewar
         end
 
         if new_dest.nil?
-          $stderr.puts "  Can't move #{self} to #{destination}"
+          $stderr.puts "    Can't move #{self} to #{destination}"
         else
           o = new_dest.unit
           if o and allied_with?(o)
@@ -480,7 +480,7 @@ module Weewar
     # command is sent to the weewar server.  You should not call this yourself.
     def process_attack(xml_text)
       xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })['attack']
-      Utils.log_debug.debug("process_attack: "+xml.inspect)
+      Utils.log_debug("process_attack: "+xml.inspect)
       if !xml['target']
         puts "process_attack has no target properties: #{xml.inspect}"
         return
@@ -500,7 +500,7 @@ module Weewar
       damage_received = xml['damageReceived'].to_i
       @hp = xml['remainingQuantity'].to_i
 
-      puts "  #{self} (-#{damage_received}: #{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}: #{enemy.hp})"
+      puts "    #{self} (-#{damage_received}: #{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}: #{enemy.hp})"
     end
 
     # Commands this Unit to attack another Unit.  This Unit will not move
