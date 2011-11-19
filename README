@@ -7,6 +7,19 @@ Later a bot will be created to play on weewar.com
 Later this will become a platform to develop Weewar Bots
 But now, let's code !
 
+Statuts
+=======
+
+It can accept games, and play.
+
+But it is not intelligent at all for now.
+It creates some infantery and go for the first ennemie base it finds,
+attacking ennemies in the way.
+
+It is the basic loop weewar-ai put in it :)
+Have to code the AI part now :)
+
+
 Setup
 =====
 
@@ -38,6 +51,17 @@ lot of code by Pistos:
 TODO
 ====
 
-- Send a command
+- catch error and send them as chat msg if possible
+- welcome chat msg
+- better pathfinding, take into account the terrains
 - Code AI !
+
+
+Questions:
+Do we have to remember unit state (with their goal) between states ?
+Or the AI should be able to assign again the same goals (or not depending on the situation) between turns ?
+The situation needs to be evaluated anyway, but the AI should not forget what was the unit goals (or not?).
+
+Do we need a DB to store game states with goals?
+Or the AI can recreate theml between sessions ?
 

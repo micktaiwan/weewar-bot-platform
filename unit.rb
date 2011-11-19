@@ -106,18 +106,17 @@ module Weewar
     INFINITY = 99999999
 
     # Units are created by the Map class.  No need to instantiate any on your own.
-    def initialize( game, hex, faction, type, hp, finished, capturing = false )
-      sym = SYMBOL_FOR_UNIT[ type ]
+    def initialize(game, hex, faction, type, hp, finished, capturing = false)
+      sym = SYMBOL_FOR_UNIT[type]
       if sym.nil?
         raise "Unknown type: '#{type}'"
       end
-
       @game, @hex, @faction, @type, @hp, @finished, @capturing =
         game, hex, faction, sym, hp.to_i, finished, capturing
     end
 
     def to_s
-      "#{@faction} #{@type} @ (#{@hex.x},#{@hex.y})"
+      "#{@faction}: #{@type}@(#{@hex.x},#{@hex.y})"
     end
 
     # The Unit's current x coordinate (column).
@@ -153,7 +152,7 @@ module Weewar
     #     # attack some troopers!
     #   end
     def unit_class
-      UNIT_CLASSES[ @type ]
+      UNIT_CLASSES[@type]
     end
 
     # Comparison for equality with another Unit.
@@ -161,7 +160,7 @@ module Weewar
     # is of the same Faction, and is the same type.
     #   if new_unit == old_unit
     #   end
-    def ==( other )
+    def ==(other)
       @hex == other.hex and
       @faction == other.faction and
       @type == other.type
@@ -174,7 +173,7 @@ module Weewar
     #     my_unit.move_to enemy_base
     #   end
     def can_capture?
-      [ :linf, :hinf, :hover ].include? @type
+      [:linf, :hinf, :hover].include? @type
     end
 
     # An Array of the Units which this Unit can attack in the current turn.
@@ -182,13 +181,13 @@ module Weewar
     # as if the unit were on that Hex instead of its current Hex.
     #   enemies_in_range = my_unit.targets
     #   enemies_in_range_from_there = my_unit.targets possible_attack_position
-    def targets( origin = @hex )
+    def targets(origin = @hex)
       coords = XmlSimple.xml_in(
-        @game.send( "<attackOptions x='#{origin.x}' y='#{origin.y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>" )
-      )[ 'coordinate' ]
+        @game.send("<attackOptions x='#{origin.x}' y='#{origin.y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>")
+     )['coordinate']
       if coords
         coords.map { |c|
-          @game.map[ c[ 'x' ], c[ 'y' ] ].unit
+          @game.map.hex(c['x'], c['y']).unit
         }.compact
       else
         []
@@ -203,19 +202,20 @@ module Weewar
     #   if my_unit.can_attack? enemy_unit
     #     my_unit.attack enemy_unit
     #   end
-    def can_attack?( target )
-      not @finished and targets.include?( target )
+    def can_attack?(target)
+      not @finished and targets.include?(target)
     end
 
     # An Array of the Hex es which the given Unit can move to in the current turn.
     #   possible_moves = my_unit.destinations
+    # TODO: replace that. do not call the server.
     def destinations
-      coords = XmlSimple.xml_in(
-        @game.send( "<movementOptions x='#{x}' y='#{y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>" )
-      )[ 'coordinate' ]
-      coords.map { |c|
-        @game.map[ c[ 'x' ], c[ 'y' ] ]
-      }
+      xml = XmlSimple.xml_in(@game.send("<movementOptions x='#{x}' y='#{y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>"))
+      coords = xml['coordinate']
+      if !coords
+        raise "Error: " + xml
+      end
+      coords.map { |c| @game.map.hex(c['x'], c['y']) }
     end
     alias movement_options destinations
     alias movementOptions destinations
@@ -224,7 +224,7 @@ module Weewar
     #   if my_unit.can_reach? the_hex
     #     my_unit.move_to the_hex
     #   end
-    def can_reach?( hex )
+    def can_reach?(hex)
       destinations.include? hex
     end
 
@@ -235,10 +235,10 @@ module Weewar
     end
 
     # Whether or not the given unit is an ally of this Unit.
-    #   if not my_unit.allied_with?( other_unit )
+    #   if not my_unit.allied_with?(other_unit)
     #     my_unit.attack other_unit
     #   end
-    def allied_with?( unit )
+    def allied_with?(unit)
       @faction == unit.faction
     end
 
@@ -249,31 +249,31 @@ module Weewar
     # The cost in movement points for the unit to enter the given Hex.  This
     # is an internal method used for travel-related calculations; you should not
     # normally need to use this yourself.
-    def entrance_cost( hex )
-      return nil if hex.nil?
+    def entrance_cost(hex)
+      raise "hex is nil" if hex.nil?
 
       specs_for_type = Hex.terrain_specs[hex.type]
-      if specs_for_type.nil?
-        raise "No specs for type '#{hex.type.inspect}': #{Hex.terrain_specs.inspect}"
-      end
-      specs_for_type[ :movement ][ unit_class ]
+      raise "No specs for type '#{hex.type.inspect}': #{Hex.terrain_specs.inspect}" if specs_for_type.nil?
+      tag(specs_for_type[:movement][unit_class]) { |rv|
+        raise "no specs for #{unit_class}" if !rv
+        }
     end
 
     # The cost in movement points for the unit to travel along the given path.
     # The path given should be an Array of Hexes.  This
     # is an internal method used for travel-related calculations; you should not
     # normally need to use this yourself.
-    def path_cost( path )
-      path.inject( 0 ) { |sum,hex|
-        sum + entrance_cost( hex )
+    def path_cost(path)
+      path.inject(0) { |sum,hex|
+        sum + entrance_cost(hex)
       }
     end
 
     # The cost in movement points for this unit to travel to the given
     # destination.
-    def travel_cost( dest )
-      sp = shortest_path( dest )
-      path_cost( sp )
+    def travel_cost(dest)
+      sp = shortest_path(dest)
+      path_cost(sp)
     end
 
     # The shortest path (as an Array of Hexes) from the
@@ -282,48 +282,48 @@ module Weewar
     # If the optional exclusion array is provided, the path will not
     # pass through any Hex in the exclusion array.
     #
-    #   best_path = my_trooper.shortest_path( enemy_base )
-    def shortest_path( dest, exclusions = [] )
+    #   best_path = my_trooper.shortest_path(enemy_base)
+    def shortest_path(dest, exclusions = [])
       exclusions ||= []
-      previous = shortest_paths( exclusions )
+      previous = shortest_paths(exclusions)
       s = []
       u = dest.hex
-      while previous[ u ]
+      while previous[u]
         s.unshift u
-        u = previous[ u ]
+        u = previous[u]
       end
       s
     end
 
     # Calculate all shortest paths from the Unit's current Hex to every other
     # Hex, as per Dijkstra's algorithm
-    # ( http://en.wikipedia.org/wiki/Dijkstra's_algorithm ).
+    # (http://en.wikipedia.org/wiki/Dijkstra's_algorithm).
     # Most AIs will only need to make use of the shortest_path method instead.
-    def shortest_paths( exclusions = [] )
+    def shortest_paths(exclusions = [])
       # Initialization
       exclusions ||= []
-      source = hex
-      dist = Hash.new
-      previous = Hash.new
-      q = []
+      source    = hex
+      dist      = Hash.new
+      previous  = Hash.new
+      q         = []
       @game.map.each do |h|
         if not exclusions.include? h
-          dist[ h ] = INFINITY
+          dist[h] = INFINITY
           q << h
         end
       end
-      dist[ source ] = 0
+      dist[source] = 0
 
       # Work
       while not q.empty?
-        u = q.inject { |best,h| dist[ h ] < dist[ best ] ? h : best }
+        u = q.inject { |best,h| dist[h] < dist[best] ? h : best }
         q.delete u
-        @game.map.hex_neighbours( u ).each do |v|
+        @game.map.hex_neighbours(u).each do |v|
           next if exclusions.include? v
-          alt = dist[ u ] + entrance_cost( v )
-          if alt < dist[ v ]
-            dist[ v ] = alt
-            previous[ v ] = u
+          alt = dist[u] + entrance_cost(v)
+          if alt < dist[v]
+            dist[v]     = alt
+            previous[v] = u
           end
         end
       end
@@ -338,15 +338,15 @@ module Weewar
 
     # Sends an XML command to the server regarding this Unit. This is an
     # internal method that you should normally not need to call yourself.
-    def send( xml )
+    def send(xml)
       command = "<unit x='#{x}' y='#{y}'>#{xml}</unit>"
       response = @game.send command
-      doc = Hpricot.XML( response )
-      @finished = !! doc.at( 'finished' )
+      doc = Hpricot.XML(response)
+      @finished = !! doc.at('finished')
       if not @finished
-        $stderr.puts "  #{self} NOT FINISHED:\n\t#{response}"
+        $stderr.puts "#{self} NOT FINISHED:\n\t#{response}"
       end
-      if not doc.at( 'ok' )
+      if not doc.at('ok')
         error = doc.at 'error'
         if error
           message = "ERROR from server: #{error.inner_html}"
@@ -370,8 +370,8 @@ module Weewar
     #
     #   another_unit.move_to(
     #     enemy_unit,
-    #     :also_attack => [ enemy_unit ] + enemy_artillery )
-    #   )
+    #     :also_attack => [enemy_unit] + enemy_artillery)
+    #  )
     #
     # If an Array of hexes is provided as the :exclusions option, the Unit will
     # not pass through any of the exclusion Hex es on its way to the destination.
@@ -379,35 +379,35 @@ module Weewar
     #   spy_unit.move_to(
     #     enemy_base,
     #     :exclusions => well_defended_choke_point_hexes
-    #   )
+    #  )
     #
     # By default, moving onto a base with a capturing unit will attempt a capture.
     # Set the :no_capture option to true to prevent this.
     #
-    #   my_trooper.move_to( enemy_base, :no_capture => true )
+    #   my_trooper.move_to(enemy_base, :no_capture => true)
     #
     #   navy_seal.move_to(
     #     enemy_base,
     #     :also_attack => hard_targets,
     #     :exclusions => fortified_hexes,
     #     :no_capture => true
-    #   )
-    def move_to( destination, options = {} )
+    #  )
+    def move_to(destination, options = {})
       command = ""
-      options[ :exclusions ] ||= []
+      options[:exclusions] ||= []
 
       new_hex = @hex
 
       if destination != @hex
         # Travel
 
-        path = shortest_path( destination, options[ :exclusions ] )
+        path = shortest_path(destination, options[:exclusions])
         if path.empty?
           $stderr.puts "No path from #{self} to #{destination}"
         else
           dests = destinations
           new_dest = path.pop
-          while new_dest and not dests.include?( new_dest )
+          while new_dest and not dests.include?(new_dest)
             new_dest = path.pop
           end
         end
@@ -416,10 +416,10 @@ module Weewar
           $stderr.puts "  Can't move #{self} to #{destination}"
         else
           o = new_dest.unit
-          if o and allied_with?( o )
+          if o and allied_with?(o)
             # Can't move through allied units
-            options[ :exclusions ] << new_dest
-            return move_to( destination, options )
+            options[:exclusions] << new_dest
+            return move_to(destination, options)
           else
             x = new_dest.x
             y = new_dest.y
@@ -430,15 +430,15 @@ module Weewar
       end
 
       target = nil
-      also_attack = options[ :also_attack ]
+      also_attack = options[:also_attack]
       if also_attack
-        enemies = targets( new_hex )
+        enemies = targets(new_hex)
         if not enemies.empty?
           case also_attack
           when Array
             preferred = also_attack & enemies
           else
-            preferred = [ also_attack ] & enemies
+            preferred = [also_attack] & enemies
           end
           target = preferred.first# || enemies.random
 
@@ -449,24 +449,24 @@ module Weewar
       end
 
       if(
-        not options[ :no_capture ] and
+        not options[:no_capture] and
         can_capture? and
         new_hex == destination and
         new_hex.capturable?
-      )
-        puts "#{self} capturing #{new_hex}"
+        )
+        puts "    capture: #{self} => #{new_hex}"
         command << "<capture/>"
       end
 
       if not command.empty?
-        result = send( command )
-        puts "Moved #{self} to #{new_hex}"
+        result = send(command)
+        puts "    Moved #{self} to #{new_hex}"
         @hex.unit = nil
         new_hex.unit = self
         @hex = new_hex
         if target
           #<attack target='[3,4]' damageReceived='2' damageInflicted='7' remainingQuantity='8' />
-          process_attack result
+          process_attack(result)
           @game.last_attacked = target
         end
 
@@ -478,22 +478,27 @@ module Weewar
 
     # This is an internal method used to update the Unit attributes after a
     # command is sent to the weewar server.  You should not call this yourself.
-    def process_attack( xml_text )
-      xml = XmlSimple.xml_in( xml_text, { 'ForceArray' => false } )[ 'attack' ]
-      if xml[ 'target' ] =~ /\[(\d+),(\d+)\]/
+    def process_attack(xml_text)
+      xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })['attack']
+      Utils.log_debug.debug("process_attack: "+xml.inspect)
+      if !xml['target']
+        puts "process_attack has no target properties: #{xml.inspect}"
+        return
+      end
+      if xml['target'] =~ /\[(\d+),(\d+)\]/
         x, y = $1, $2
-        enemy = @game.map[ x, y ].unit
+        enemy = @game.map.hex(x, y).unit
       end
 
       if enemy.nil?
         raise "Server says enemy attacked was at (#{x},#{y}), but we have no record of an enemy there."
       end
 
-      damage_inflicted = xml[ 'damageInflicted' ].to_i
+      damage_inflicted = xml['damageInflicted'].to_i
       enemy.hp -= damage_inflicted
 
-      damage_received = xml[ 'damageReceived' ].to_i
-      @hp = xml[ 'remainingQuantity' ].to_i
+      damage_received = xml['damageReceived'].to_i
+      @hp = xml['remainingQuantity'].to_i
 
       puts "  #{self} (-#{damage_received}: #{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}: #{enemy.hp})"
     end
@@ -502,13 +507,13 @@ module Weewar
     # anywhere in the attempt to attack.
     # Provide either a Unit or a Hex to attack as a method argument.
     #   my_unit.attack enemy_unit
-    def attack( unit )
+    def attack(unit)
       x = unit.x
       y = unit.y
 
       result = send "<attack x='#{x}' y='#{y}'/>"
       process_attack result
-      @game.last_attacked = @game.map[ x, y ].unit
+      @game.last_attacked = @game.map.hex(x, y).unit
       true
     end
 
@@ -516,7 +521,7 @@ module Weewar
     #   my_hurt_unit.repair
     def repair
       send "<repair/>"
-      @hp += REPAIR_RATE[ @type ]
+      @hp += REPAIR_RATE[@type]
     end
   end
 end

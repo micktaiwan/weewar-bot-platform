@@ -39,7 +39,9 @@ class WeewarCommand
           when input=="help"
             print_help
           when input[0..6]=="analyse"
-            p @ww.play(input[8..-1], {:analyse_only=>true})
+            @ww.play(input[8..-1], {:analyse_only=>true})
+          when input[0..4]=="dlmap"
+            @ww.dl_map(input[6..-1])
           when input[0..5]=="gstate"
             r = @ww.game_state(input[7..-1])
             puts r.body if r.code=="200"

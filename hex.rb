@@ -1,5 +1,5 @@
-#require 'open-uri'
-#require 'hpricot'
+require 'open-uri'
+require 'hpricot'
 require 'traits'
 
 module Weewar
@@ -22,30 +22,9 @@ module Weewar
       'Swamp' => :swamp,
       'Water' => :water,
       'Woods' => :woods,
+      'Bridge' => :bridge,
+      'Repairshop' => :repairshop,
     }
-
-    # Downloads the terrain specifications from weewar.com.
-    # No need to call this yourself.
-    def Hex.initialize_specs
-      raise "todo"
-      trait[:terrain_specs] = Hash.new
-      doc = Hpricot( open( 'http://weewar.com/specifications' ) )
-      h2 = doc.at( '#Terrains' )
-      table = h2.next_sibling
-      table.search( 'tr' ).each do |tr|
-        name = tr.at( 'b' ).inner_text
-        type = SYMBOL_FOR_NAME[ name ]
-        if type
-          h = trait[ :terrain_specs ][ type ] = {
-            :attack => parse_numbers( tr.search( 'td' )[ 2 ].inner_text ),
-            :defense => parse_numbers( tr.search( 'td' )[ 3 ].inner_text ),
-            :movement => parse_numbers( tr.search( 'td' )[ 4 ].inner_text ),
-          }
-        else
-          raise "Unknown terrain type: #{name}"
-        end
-      end
-    end
 
     # No need to call this yourself.  Hexes are parsed and built
     # by the Map class.
@@ -53,18 +32,41 @@ module Weewar
       @game, @type, @x, @y = game, type, x, y
     end
 
+    # Downloads the terrain specifications from weewar.com.
+    # No need to call this yourself.
+    def Hex.initialize_specs
+      trait[:terrain_specs] = Hash.new
+      #doc = Hpricot( open( 'http://weewar.com/specifications' ) )
+      doc = Hpricot(File.new("res/unit_specifications.html", "r").read)
+      h2 = doc.at('#Terrains')
+      table = h2.next_sibling
+      table.search( 'tr' ).each do |tr|
+        name = tr.at( 'b' ).inner_text
+        type = SYMBOL_FOR_NAME[name]
+        if !type
+          raise "Unknown terrain type: #{name}"
+        else
+          h = trait[:terrain_specs][type] = {
+            :attack => parse_numbers( tr.search( 'td' )[2].inner_text),
+            :defense => parse_numbers( tr.search( 'td' )[3].inner_text),
+            :movement => parse_numbers( tr.search( 'td' )[4].inner_text),
+          }
+        end
+      end
+    end
+
     # An internal method used by initialize_specs.
     def Hex.parse_numbers( text )
       retval = Hash.new
-      text.scan( /(\w+): (\d+)/ ) do |data|
-        retval[ data[ 0 ].to_sym ] = data[ 1 ].to_i
+      text.scan( /(\w+):(\d+)/ ) do |data|
+        retval[data[0].to_sym] = data[1].to_i
       end
       retval
     end
 
     # The terrain_specs Hash.
     def Hex.terrain_specs
-      trait[ :terrain_specs ]
+      trait[:terrain_specs]
     end
 
     def to_s
@@ -88,7 +90,7 @@ module Weewar
     # Issues a command to build the given Unit type on this Hex.
     #   base.build :linf
     def build( unit_type )
-      @game.send "<build x='#{@x}' y='#{@y}' type='#{WeewarAI::Unit::TYPE_FOR_SYMBOL[unit_type]}'/>"
+      @game.send "<build x='#{@x}' y='#{@y}' type='#{Unit::TYPE_FOR_SYMBOL[unit_type]}'/>"
       @game.refresh
     end
 
@@ -105,7 +107,7 @@ module Weewar
     #     my_trooper.move_to hex
     #   end
     def capturable?
-      [ :base, :harbour, :airfield ].include?( @type ) and
+      [:base, :harbour, :airfield].include?( @type ) and
       @faction != @game.my_faction
     end
 

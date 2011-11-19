@@ -6,7 +6,7 @@
 require 'bot'
 
 # comment out to play online
-$local_game = true
+# $local_game = true
 
 module Weewar
 
@@ -17,12 +17,86 @@ module Weewar
   class Weewar
 
     def initialize
+      Utils.init
       @bots = []
+    end
+
+    def do_loop
+      loop do
+        begin
+          just_played = false
+          puts '================= loop begin'
+          # get HQ
+          r = Utils.get("headquarters")
+          raise r.body if r.code!="200"
+          data = Utils.xmls(r.body, {'ForceArray' => ['game']})
+          puts "got HQ"
+          data['game'].each { |g|
+            puts "game: #{g['name']}: #{g['state']} #{g['factionState']}"
+            #next if g['inNeedOfAttention'] != "true"
+            # invites
+            case g['state']
+            when 'lobby'
+              case
+              when g['factionState'] != 'accepted'
+                if g['rated']=='false'
+                  accept_invitation(g['id'])
+                  puts '  accepted'
+                else
+                  decline_invitation(g['id'])
+                  puts '  declined'
+                end
+              end
+            when 'running'
+              if g['inNeedOfAttention'] == "true"
+                puts '  will play'
+                play(g['id'])
+                just_played = true
+              else
+                puts '  not my turn'
+              end
+            when 'finished'
+              puts '  removing'
+              remove_game(g['id'])
+            else
+              puts "don't know how to handle this state: #{g['state']}"
+            end
+            }
+        rescue Exception=>e
+          puts "ERROR: #{e.message}"
+        end
+        secs = 60
+        puts "Sleeping #{secs}s..."
+        sleep(secs)
+      end
+    end
+
+    # Accepts an invitation to a game.
+    def accept_invitation( game_id )
+      Utils.raw_send "<weewar game='#{game_id}'><acceptInvitation/></weewar>"
+    end
+
+    # Declines an invitation to a game.
+    def decline_invitation( game_id )
+      Utils.raw_send "<weewar game='#{game_id}'><declineInvitation/></weewar>"
+    end
+
+    # Removes a game from headquarters.
+    def remove_game( game_id )
+      p Utils.raw_send "<weewar game='#{game_id}'><removeGame/></weewar>"
     end
 
     # @return [Array] an array of user game ids
     def my_games
       user_games(Utils.credentials[:login])
+    end
+
+    # will play all bot games
+    # @param [Hash]   options: See Bot class
+    def play_all(options)
+      @bots.each { |b|
+        b.play(options)
+        }
     end
 
     # will play a game
@@ -72,11 +146,21 @@ module Weewar
       Utils.xmls(r.body, { 'GroupTags' => { 'game' => 'id' }})
     end
 
+    # Download a map
+    def dl_map(id)
+      r = Utils.get("map/#{id}")
+      raise r.message if r.code!="200"
+      File.open(File.dirname(__FILE__) + "/maps/map_#{id}.xml","w").write(r.body)
+    end
+
   end
 end
 
 if __FILE__ == $0
   puts "standalone mode not implemented yet"
   puts "run ruby main.rb for an interactive prompt"
+  w = Weewar::Weewar.new
+  #w.play(338663, {:analyse_only=>true})
+  w.do_loop
 end
 

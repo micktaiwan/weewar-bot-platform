@@ -15,7 +15,7 @@ module Weewar
   class Game < XmlData
     attr_reader :id, :name, :round, :state, :pending_invites, :pace, :type,
       :url, :map, :map_url, :credits_per_base, :initial_credits, :playing_since,
-      :players, :units
+      :players, :units, :factions
     attr_accessor :last_attacked
 
     # Instantiate a new Game instance corresponding to the weewar game
@@ -25,24 +25,22 @@ module Weewar
       @method = 'gamestate'
       @id     = game_id
       if options[:local_game]
-        super()
-        self.data  = File.open(File.dirname(__FILE__) + "/specs/game_running.xml",'r').read
+        super({:data=>File.open(File.dirname(__FILE__) + "/specs/game_for_testing.xml",'r').read},
+          {'ForceArray' => ['faction', 'player', 'terrain', 'unit']})
       else
         super(options, { 'ForceArray' => ['faction', 'player', 'terrain', 'unit'], })
       end
-      @map    = Map.new(self[:map].to_i, {:local_game=>options[:local_game],:get=>true}) if !@map
+      @map    = Map.new(self, self[:map].to_i, options) if !@map
       refresh
     end
 
     def me_to_play?
       p = get_player(login)
-      raise "can't find player #{p}" if !p
-      p(p)
+      raise "can't find player #{login}" if !p
       p['current'] ? true : false
     end
 
     def get_player(name)
-      puts name
       self[:players]['player'].each { |p|
         return p if p['content'] == name
         }
@@ -54,7 +52,6 @@ module Weewar
     #def current_player
     #  @players.find { |p| p.current? }
     #end
-
 
     #alias pendingInvites pending_invites
     #alias mapUrl map_url
@@ -83,9 +80,10 @@ module Weewar
       self['factions']['faction'].each_with_index do |faction_xml,ordinal|
         faction = Faction.new( self, faction_xml, ordinal )
         @factions << faction
-
+        #p faction_xml
+        next if !faction_xml['unit'] # happens when no more unit :) (dead)
         faction_xml['unit'].each do |u|
-          hex = @map.hex(u['x'], u['y'])
+          hex = @map.hex(u['x'].to_i, u['y'].to_i)
           unit = Unit.new(
             self,
             hex,
@@ -98,7 +96,6 @@ module Weewar
           @units << unit
           hex.unit = unit
         end
-
         faction_xml['terrain'].each do |terrain|
           hex = @map.hex(terrain['x'], terrain['y'])
           if hex.type == :base
@@ -112,7 +109,7 @@ module Weewar
     # generally never need to call this method directly; it is used
     # internally by the Game class.
     def send(xml_command)
-      Utils.send "<weewar game='#{@id}'>#{xml_command}</weewar>"
+      Utils.raw_send "<weewar game='#{@id}'>#{xml_command}</weewar>"
     end
 
     #-- -------------------------

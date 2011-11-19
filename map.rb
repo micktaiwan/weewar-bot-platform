@@ -43,14 +43,14 @@ module Weewar
 
     # Creates a new Map instance, based on the given Game and map ID number.
     # You normally do not need to call this yourself.
-    def initialize(map_id, options={})
+    def initialize(game, map_id, options={})
     #def initialize( game, map_id )
-    #  @game = game
+      @game = game
       @method = "map"
       @id     = map_id
+      map_path = File.dirname(__FILE__) + "/maps/map_#{@id}.xml"
       if options[:local_game]
-        super()
-        self.data  = File.open(File.dirname(__FILE__) + "/maps/map_#{@id}.xml",'r').read
+        super({:data=>File.open(map_path,'r').read},{ 'ForceArray' => ['terrain'] })
       else
         # TODO: cache maps (there is a revision tag!) and check if map has been saved on disk, reload it if it is the case
         super(options, { 'ForceArray' => ['terrain'] })
@@ -74,7 +74,7 @@ module Weewar
       y = y.to_i
       c = @cols[x]
       if c
-        c[ y ]
+        c[y]
       end
     end
     alias xy hex
