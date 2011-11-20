@@ -181,6 +181,7 @@ module Weewar
     # as if the unit were on that Hex instead of its current Hex.
     #   enemies_in_range = my_unit.targets
     #   enemies_in_range_from_there = my_unit.targets possible_attack_position
+    # TODO: replace that. do not call the server.
     def targets(origin = @hex)
       coords = XmlSimple.xml_in(
         @game.send("<attackOptions x='#{origin.x}' y='#{origin.y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>")
@@ -480,7 +481,8 @@ module Weewar
     # command is sent to the weewar server.  You should not call this yourself.
     def process_attack(xml_text)
       xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })['attack']
-      Utils.log_debug("process_attack: "+xml.inspect)
+      Utils.log_debug("process_attack xml: "+xml.inspect)
+      Utils.log_debug("process_attack xml_text: "+xml_text.inspect)
       if !xml['target']
         puts "process_attack has no target properties: #{xml.inspect}"
         return

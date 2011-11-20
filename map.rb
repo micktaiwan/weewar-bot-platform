@@ -62,7 +62,6 @@ module Weewar
         x = t['x'].to_i
         @cols[x] ||= Hash.new
         y = t['y'].to_i
-        # TODO: intentionnally here @game is nil. It is passed here because it is used in Hex.... and for what....
         @cols[x][y] = Hex.new(@game,SYMBOL_FOR_TERRAIN[t['type']],x,y)
       end
     end

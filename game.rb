@@ -86,7 +86,7 @@ module Weewar
         faction = Faction.new( self, faction_xml, ordinal )
         @factions << faction
         #p faction_xml
-        next if !faction_xml['unit'] # happens when no more unit :) (dead)
+        next if !faction_xml['unit'] # happens when no more unit
         faction_xml['unit'].each do |u|
           hex = @map.hex(u['x'].to_i, u['y'].to_i)
           unit = Unit.new(
@@ -101,6 +101,7 @@ module Weewar
           @units << unit
           hex.unit = unit
         end
+        next if !faction_xml['terrain'] # happens when no more terrain
         faction_xml['terrain'].each do |terrain|
           hex = @map.hex(terrain['x'], terrain['y'])
           if hex.type == :base
@@ -122,7 +123,7 @@ module Weewar
     #++
 
     def chat(str)
-      p send "<chat>#{str}</chat>"
+      send "<chat>#{str}</chat>"
     end
 
 
@@ -193,6 +194,9 @@ module Weewar
     #   capturable_bases = game.enemy_bases
     def enemy_bases
       @map.bases.find_all { |b| b.faction != my_faction }
+    end
+    def neutral_bases
+      bases_of(nil)
     end
 
 protected

@@ -21,6 +21,7 @@ module Weewar
     # Options:
     # *  :analyse_only=>true: will not send any command to the server
     def play(options)
+      @game.refresh
       #s = add_state
       # find he we can play
       #s = @states.last
@@ -33,7 +34,7 @@ module Weewar
         analyse(s)
       else
         if !s.me_to_play?
-          puts "not my turn yet (game: #{s[:name]} / ##{@game_id})"
+          puts "  not my turn yet (game: #{s[:name]} / ##{@game_id})"
         else
           basic(s)
         end
@@ -42,6 +43,7 @@ module Weewar
 
     def basic(game)
       puts "  Taking turn for game #{game.id}"
+
       i = me = my = game.my_faction
       units = my.units.find_all { |u| not u.finished? }
 
@@ -50,15 +52,19 @@ module Weewar
         return
       end
 
-      # Find a place to go, things to shoot
-      destination = game.enemy_bases.first
+      destination = game.neutral_bases.find_all { |b| !b.occupied?}.first
+      destination = game.enemy_bases.first if !destination
       enemies     = game.enemy_units
+
       # Move units
       units.each do |unit|
+        # Find a place to go, things to shoot
         unit.move_to(destination,:also_attack => enemies)
       end
       # Build
+      puts game.my_bases.size
       game.my_bases.each do |base|
+        p base.unit
         next if base.occupied?
         if i.can_afford?( :linf )
           base.build :linf
