@@ -51,25 +51,26 @@ lot of code by Pistos:
 TODO
 ====
 
+ordered by priority
+
+- put all sources in lib/ and put basic in a new bot instance
+- blog entry !
 - bug: it remained two my_bases but it didn't build anything
   apparently we need to refresh the map too with the method 'maplayout'
 - see if we can not generate all xml first and send all xml at once to server
-- replace all helpers call to server by real calculs
 - pretty print for hashes and arrays (does Calculette has this already?)
-- blog entry !
 - Can't move ai_ChuckBot: linf@(3,3) to base @ (5,5)
   if pathfinder can't find a way because of a movable unit, it shall find the target closest hex to go.
   or at least there should be an options for.
 - better pathfinding, take into account the terrains
-- put all sources in lib/
-- Code AI ! based on Bot.rb
 - stop calling helping methods from weewawr.com, the bot shall calculate all by itself
+- Code AI ! based on Bot.rb
 
 Questions:
-Do we have to remember unit state (with their goal) between states ?
-Or the AI should be able to assign again the same goals (or not depending on the situation) between turns ?
-The situation needs to be evaluated anyway, but the AI should not forget what was the unit goals (or not?).
+  Do we have to remember unit state (with their goal) between states ?
+  Or the AI should be able to assign again the same goals (or not depending on the situation) between turns ?
+  The situation needs to be evaluated anyway, but the AI should not forget what was the unit goals (or not?).
 
-Do we need a DB to store game states with goals?
-Or the AI can recreate theml between sessions ?
+  Do we need a DB to store game states with goals?
+  Or the AI can recreate them between sessions ?
 
