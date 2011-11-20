@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map id="38234">
+  <name>Duck Island</name>
+  <initialCredits>200</initialCredits>
+  <perBaseCredits>100</perBaseCredits>
+  <width>11</width>
+  <height>10</height>
+  <maxPlayers>2</maxPlayers>
+  <url>http://weewar.com/map/38234</url>
+  <thumbnail>http://weewar.com/images/maps/boardThumb_38234_ir4.png</thumbnail>
+  <preview>http://weewar.com/images/maps/preview_38234_ir4.png</preview>
+  <revision>2</revision>
+  <creator>spadequack</creator>
+  <creatorProfile>http://weewar.com/user/spadequack</creatorProfile>
+  <terrains>
+    <terrain x="0" y="0" type="Water" />
+    <terrain x="0" y="1" type="Water" />
+    <terrain x="0" y="2" type="Water" />
+    <terrain x="0" y="3" type="Water" />
+    <terrain x="0" y="4" type="Water" />
+    <terrain x="0" y="5" type="Water" />
+    <terrain x="0" y="6" type="Water" />
+    <terrain x="0" y="7" type="Water" />
+    <terrain x="0" y="8" type="Water" />
+    <terrain x="0" y="9" type="Water" />
+    <terrain x="1" y="0" type="Water" />
+    <terrain x="1" y="1" type="Mountains" />
+    <terrain x="1" y="2" type="Mountains" />
+    <terrain x="1" y="3" type="Woods" />
+    <terrain x="1" y="4" type="Woods" />
+    <terrain x="1" y="5" type="Base" />
+    <terrain x="1" y="6" type="Plains" />
+    <terrain x="1" y="7" type="Base" />
+    <terrain x="1" y="8" type="Desert" />
+    <terrain x="1" y="9" type="Water" />
+    <terrain x="2" y="0" type="Water" />
+    <terrain x="2" y="1" type="Desert" />
+    <terrain startFaction="0" x="2" y="2" type="Base" />
+    <terrain x="2" y="3" type="Desert" />
+    <terrain x="2" y="4" type="Plains" />
+    <terrain x="2" y="5" type="Woods" />
+    <terrain x="2" y="6" type="Water" />
+    <terrain x="2" y="7" type="Swamp" />
+    <terrain x="2" y="8" type="Plains" />
+    <terrain x="2" y="9" type="Water" />
+    <terrain x="3" y="0" type="Water" />
+    <terrain x="3" y="1" type="Base" />
+    <terrain x="3" y="2" type="Plains" />
+    <terrain x="3" y="3" type="Plains" />
+    <terrain x="3" y="4" type="Base" />
+    <terrain x="3" y="5" type="Woods" />
+    <terrain x="3" y="6" type="Swamp" />
+    <terrain x="3" y="7" type="Swamp" />
+    <terrain x="3" y="8" type="Plains" />
+    <terrain x="3" y="9" type="Water" />
+    <terrain x="4" y="0" type="Water" />
+    <terrain x="4" y="1" type="Water" />
+    <terrain x="4" y="2" type="Woods" />
+    <terrain x="4" y="3" type="Plains" />
+    <terrain x="4" y="4" type="Desert" />
+    <terrain x="4" y="5" type="Plains" />
+    <terrain x="4" y="6" type="Mountains" />
+    <terrain x="4" y="7" type="Plains" />
+    <terrain x="4" y="8" type="Swamp" />
+    <terrain x="4" y="9" type="Water" />
+    <terrain x="5" y="0" type="Water" />
+    <terrain x="5" y="1" type="Water" />
+    <terrain x="5" y="2" type="Plains" />
+    <terrain x="5" y="3" type="Mountains" />
+    <terrain x="5" y="4" type="Plains" />
+    <terrain x="5" y="5" type="Plains" />
+    <terrain x="5" y="6" type="Plains" />
+    <terrain x="5" y="7" type="Woods" />
+    <terrain x="5" y="8" type="Water" />
+    <terrain x="5" y="9" type="Water" />
+    <terrain x="6" y="0" type="Water" />
+    <terrain x="6" y="1" type="Plains" />
+    <terrain x="6" y="2" type="Desert" />
+    <terrain x="6" y="3" type="Mountains" />
+    <terrain x="6" y="4" type="Plains" />
+    <terrain x="6" y="5" type="Mountains" />
+    <terrain x="6" y="6" type="Plains" />
+    <terrain x="6" y="7" type="Desert" />
+    <terrain x="6" y="8" type="Base" />
+    <terrain x="6" y="9" type="Water" />
+    <terrain x="7" y="0" type="Water" />
+    <terrain x="7" y="1" type="Plains" />
+    <terrain x="7" y="2" type="Swamp" />
+    <terrain x="7" y="3" type="Woods" />
+    <terrain x="7" y="4" type="Woods" />
+    <terrain x="7" y="5" type="Plains" />
+    <terrain x="7" y="6" type="Plains" />
+    <terrain x="7" y="7" type="Plains" />
+    <terrain x="7" y="8" type="Plains" />
+    <terrain x="7" y="9" type="Water" />
+    <terrain x="8" y="0" type="Water" />
+    <terrain x="8" y="1" type="Plains" />
+    <terrain x="8" y="2" type="Swamp" />
+    <terrain x="8" y="3" type="Water" />
+    <terrain x="8" y="4" type="Base" />
+    <terrain x="8" y="5" type="Woods" />
+    <terrain x="8" y="6" type="Desert" />
+    <terrain startUnit="Trooper" startUnitOwner="1" startFaction="1" x="8" y="7" type="Base" />
+    <terrain x="8" y="8" type="Desert" />
+    <terrain x="8" y="9" type="Water" />
+    <terrain x="9" y="0" type="Water" />
+    <terrain x="9" y="1" type="Base" />
+    <terrain x="9" y="2" type="Woods" />
+    <terrain x="9" y="3" type="Desert" />
+    <terrain x="9" y="4" type="Plains" />
+    <terrain x="9" y="5" type="Water" />
+    <terrain x="9" y="6" type="Base" />
+    <terrain x="9" y="7" type="Woods" />
+    <terrain x="9" y="8" type="Water" />
+    <terrain x="9" y="9" type="Water" />
+    <terrain x="10" y="0" type="Water" />
+    <terrain x="10" y="1" type="Water" />
+    <terrain x="10" y="2" type="Water" />
+    <terrain x="10" y="3" type="Water" />
+    <terrain x="10" y="4" type="Water" />
+    <terrain x="10" y="5" type="Water" />
+    <terrain x="10" y="6" type="Water" />
+    <terrain x="10" y="7" type="Water" />
+    <terrain x="10" y="8" type="Water" />
+    <terrain x="10" y="9" type="Water" />
+  </terrains>
+</map>
+
