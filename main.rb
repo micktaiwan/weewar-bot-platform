@@ -6,7 +6,7 @@
 # @author Mickael Faivre-Maçon
 
 require 'readline'
-require 'weewar'
+require 'lib/weewar'
 require 'version'
 
 # = command line to Weewar
