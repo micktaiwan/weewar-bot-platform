@@ -9,11 +9,12 @@ module Weewar
   # Play a given game
   class Bot
 
-    attr_reader :game_id, :game
+    attr_reader :game_id, :game, :account
 
-    def initialize(game_id)
+    def initialize(account, game_id)
+      @account = account
       @game_id  = game_id
-      @game     = Game.new(@game_id, {:local_game=>$local_game})
+      @game     = Game.new(self, @game_id, {:local_game=>$local_game})
       #@states   = []
     end
 
@@ -36,54 +37,9 @@ module Weewar
         if !s.me_to_play?
           puts "  not my turn yet (game: #{s[:name]} / ##{@game_id})"
         else
-          basic(s)
+          take_turn(s)
         end
       end
-    end
-
-    def basic(game)
-      puts "  Taking turn for game #{game.id}"
-
-      i = me = my = game.my_faction
-      units = my.units.find_all { |u| not u.finished? }
-
-      if(need_to_surrender?)
-        surrender
-        return
-      end
-
-      enemies     = game.enemy_units
-      # Move units
-      units.each do |unit|
-        # Find a place to go, things to shoot
-        destination = unit.nearest(game.neutral_bases.find_all { |b| !b.occupied?})
-        destination = unit.nearest(game.enemy_bases) if !destination
-        destination = unit.nearest(enemies) if !destination
-        unit.move_to(destination,:also_attack => enemies) if destination
-        # TODO: if can't move, repair
-      end
-      # Build
-
-      #linf =  my.units.find_all { |u| u.type == :linf }
-
-
-      build = []
-      game.my_bases.each do |base|
-        next if base.occupied?
-        [:tank, :raider, :linf].each { |unit|
-          if i.can_afford?(unit) # TODO: refresh credit
-            base.build unit
-            build << unit
-            break
-          end
-          }
-        break if build.size >= 2
-      end
-      puts "    build: #{build.join(', ')}"
-
-      # End
-      puts "  Ending turn for game #{game.id}"
-      game.finish_turn
     end
 
     # check if we need to surrender

@@ -15,14 +15,16 @@ module Weewar
   class Game < XmlData
     attr_reader :id, :name, :round, :state, :pending_invites, :pace, :type,
       :url, :map, :map_url, :credits_per_base, :initial_credits, :playing_since,
-      :players, :units, :factions
+      :players, :units, :factions, :bot, :account
     attr_accessor :last_attacked
 
     # Instantiate a new Game instance corresponding to the weewar game
     # with the given id number.
     #   game = Game.new(132, {:local_game=>true})
-    def initialize(game_id, options={})
+    def initialize(bot, game_id, options={})
       puts "*** Initializing Game"
+      @bot          = bot
+      @account      = bot.account
       @id           = game_id
       @options      = options
       @method       = 'gamestate'
@@ -31,10 +33,10 @@ module Weewar
 
     # TODO
     def me_to_play?
-      player = get_player(login)
+      player = get_player(@account.login)
       if !player
         p self.data
-        raise "can't find player #{login}"
+        raise "can't find player #{@account.login}"
       end
       player['current'] ? true : false
     end
@@ -116,7 +118,7 @@ module Weewar
     # generally never need to call this method directly; it is used
     # internally by the Game class.
     def send(xml_command)
-      Utils.raw_send "<weewar game='#{@id}'>#{xml_command}</weewar>"
+      Utils.raw_send @bot.account, "<weewar game='#{@id}'>#{xml_command}</weewar>"
     end
 
     #-- -------------------------
@@ -164,7 +166,7 @@ module Weewar
     #     my_base.build :htank
     #   end
     def my_faction
-      faction_for_player(login)
+      faction_for_player(@account.login)
     end
 
     # An Array of the Units not belonging to your AI.
@@ -200,11 +202,6 @@ module Weewar
       bases_of(nil)
     end
 
-protected
-
-    def login
-      Utils.credentials[:login]
-    end
   end
 
 end

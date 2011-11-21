@@ -25,15 +25,15 @@ Setup
 Install XmlSimple
   gem install 'xml-simple'
 
-Edit a "accounts.txt" file in the weewar directory and write your login and development key in it as "name:login:key"
-an account by line.
-  for example:
-  a:ai_Daydz:8f9t6U5Fnkuede23z79iRcmBn
-  o:ai_Other:3d26h8jU5Fnku23z79is8y7T
-
-The important part is the login:key.
-The name will be used to switch account easily.
-You can choose what you want as a name.
+# set your login / developper key in the file ./accounts.txt
+# Edit a "accounts.txt" file in the weewar directory and write your login and development key in it as "type:name:shortcut:login:key"
+# an account by line. Type can be either "bot" or "human".
+# The name of a bot must be the name of the bot class
+# For an human, the name is not important. I mean in this code :)
+#   for example:
+#   bot:DaydBot:a:ai_Dayd:8f9t6U5Fnkuede23z79iRcmBn
+#   human:Mick:m:MickTaiwan:9d26h9jU5Fnu23z79is8y7T
+# The shortcut will be used to switch account easily using the interactive prompt.
 
 Start
 =====
@@ -55,18 +55,14 @@ TODO
 
 ordered by priority
 
-- put all sources in lib/ and put basic in a new bot instance
 - blog entry !
-- bug: it remained two my_bases but it didn't build anything
-  apparently we need to refresh the map too with the method 'maplayout'
 - see if we can not generate all xml first and send all xml at once to server
-- pretty print for hashes and arrays (does Calculette has this already?)
 - Can't move ai_ChuckBot: linf@(3,3) to base @ (5,5)
   if pathfinder can't find a way because of a movable unit, it shall find the target closest hex to go.
   or at least there should be an options for.
 - better pathfinding, take into account the terrains
-- stop calling helping methods from weewawr.com, the bot shall calculate all by itself
-- Code AI ! based on Bot.rb
+- stop calling helping methods from weewar.com, the bot shall calculate all by itself
+- Code better AI based on Bot.rb !
 
 Questions:
   Do we have to remember unit state (with their goal) between states ?

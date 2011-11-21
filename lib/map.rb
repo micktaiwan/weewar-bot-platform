@@ -46,6 +46,7 @@ module Weewar
     def initialize(game, map_id, options={})
     #def initialize( game, map_id )
       @game         = game
+      @account      = game.account
       @id           = map_id
       @method       = "map"
       super({ 'ForceArray' => ['terrain'] })
