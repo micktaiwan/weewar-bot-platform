@@ -92,6 +92,7 @@ module Weewar
     # TODO: do not send command directly
     def build( unit_type )
       @game.send "<build x='#{@x}' y='#{@y}' type='#{Unit::TYPE_FOR_SYMBOL[unit_type]}'/>"
+      # TODO: refresh credits
       # @game.refresh # Mick
     end
 

@@ -43,7 +43,7 @@ module Weewar
     #     my_base.build :hart
     #   end
     def can_afford?( type )
-      @credits >= Unit::UNIT_COSTS[ type ]
+      @credits >= Unit::UNIT_COSTS[type]
     end
 
     # An Array of the Unit s in the Game belonging to this Faction.

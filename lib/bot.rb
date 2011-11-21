@@ -63,16 +63,23 @@ module Weewar
         # TODO: if can't move, repair
       end
       # Build
+
+      #linf =  my.units.find_all { |u| u.type == :linf }
+
+
+      build = []
       game.my_bases.each do |base|
         next if base.occupied?
         [:tank, :raider, :linf].each { |unit|
-          if i.can_afford?( unit )
-            base.build :linf
+          if i.can_afford?(unit) # TODO: refresh credit
+            base.build unit
+            build << unit
             break
           end
           }
+        break if build.size >= 2
       end
-
+      puts "    build: #{build.join(', ')}"
 
       # End
       puts "  Ending turn for game #{game.id}"
