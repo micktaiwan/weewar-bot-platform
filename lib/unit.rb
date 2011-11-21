@@ -285,15 +285,23 @@ module Weewar
     #
     #   best_path = my_trooper.shortest_path(enemy_base)
     def shortest_path(dest, exclusions = [])
-      exclusions ||= []
-      previous = shortest_paths(exclusions)
-      s = []
-      u = dest.hex
-      while previous[u]
-        s.unshift u
-        u = previous[u]
+      begin
+        exclusions ||= []
+        previous = shortest_paths(exclusions)
+        s = []
+        u = dest.hex
+        while previous[u]
+          s.unshift u
+          u = previous[u]
+        end
+        s
+      rescue Exception => e
+        puts e
+        puts e.backtrace
+        p dest
+        p exclusions
+        #p @game.data
       end
-      s
     end
 
     # Calculate all shortest paths from the Unit's current Hex to every other
@@ -394,6 +402,7 @@ module Weewar
     #     :no_capture => true
     #  )
     def move_to(destination, options = {})
+      raise "destination is nil" if !destination
       command = ""
       options[:exclusions] ||= []
 
@@ -480,9 +489,10 @@ module Weewar
     # This is an internal method used to update the Unit attributes after a
     # command is sent to the weewar server.  You should not call this yourself.
     def process_attack(xml_text)
+      puts "process_attack"
       xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })['attack']
-      Utils.log_debug("process_attack xml: "+xml.inspect)
-      Utils.log_debug("process_attack xml_text: "+xml_text.inspect)
+      #Utils.log_debug("process_attack xml: "+xml.inspect)
+      #Utils.log_debug("process_attack xml_text: "+xml_text.inspect)
       if !xml['target']
         puts "process_attack has no target properties: #{xml.inspect}"
         return
@@ -517,6 +527,25 @@ module Weewar
       process_attack result
       @game.last_attacked = @game.map.hex(x, y).unit
       true
+    end
+
+    def distance(a,b)
+      x = a.hex.x-b.hex.x
+      y = a.hex.y-b.hex.y
+      Math.sqrt(x*x+y*y)
+    end
+
+    def nearest(units)
+      d = 99999
+      nearest = nil
+      units.each { |u|
+        nd = distance(self,u)
+        if nd < d
+          d = nd
+          nearest = u
+        end
+        }
+      nearest
     end
 
     # Commands the Unit to undergo repairs.

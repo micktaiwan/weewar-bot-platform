@@ -1,3 +1,5 @@
+require  File.dirname(__FILE__) + '/utils'
+
 module Weewar
 
   # Instances of the Faction class correspond to factions in a Game.
@@ -11,13 +13,13 @@ module Weewar
     # they are created for you by Game instances.
     def initialize( game, xml, ordinal )
       @game, @ordinal = game, ordinal
-      @credits = xml[ 'credits' ].to_i
-      @current = ( xml[ 'current' ] == 'true' )
-      @player_id = xml[ 'playerId' ].to_i
-      @player_name = xml[ 'playerName' ]
-      @state = xml[ 'state' ]
+      @credits        = xml[ 'credits' ].to_i
+      @current        = ( xml[ 'current' ] == 'true' )
+      @player_id      = xml[ 'playerId' ].to_i
+      @player_name    = xml[ 'playerName' ]
+      @state          = xml[ 'state' ]
     rescue Exception => e
-      Utils.log.error("Input XML: " + xml.inspect)
+      Utils.log_debug("Input XML: " + xml.inspect)
       raise e
     end
 

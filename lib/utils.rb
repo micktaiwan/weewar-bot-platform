@@ -101,11 +101,45 @@ module Weewar
 
     def self.xmls(xml, xml_options={})
       xml_options = @xml_options if !xml_options and @xml_options
-      xml_options['ForceArray'] = xml_options['ForceArray'] || false
+      #xml_options['ForceArray'] = xml_options['ForceArray'] || false
       #p xml
       #gets
       XmlSimple.xml_in(xml, xml_options)
     end
+
+    # pretty print
+    def self.pp(i)
+      @pp_indent ||= 0
+      if i.class.name=="Array"
+        puts ' '*@pp_indent + '['
+        @pp_indent += 1
+        i.each_with_index { |j,index|
+           print ' '*(@pp_indent-1)
+           puts "##{index}"
+           pp(j)
+           }
+        @pp_indent -= 1
+        puts ' '*@pp_indent + ']'
+      elsif i.class.name=="Hash"
+        puts ' '*@pp_indent + '{'
+        @pp_indent += 1
+        i.each { |k,v| print "#{' '*@pp_indent}#{k}\t=> "
+          if v.class.name=="Array" or v.class.name=="Hash"
+            @pp_indent += 1
+            puts
+            pp(v)
+            @pp_indent -= 1
+          else
+            puts v.to_s
+          end
+          }
+        @pp_indent -= 1
+        puts ' '*@pp_indent + '}'
+      else
+        puts ' '*@pp_indent + i.to_s
+      end
+    end
+
   end # module Utils
 end # module Weewar
 

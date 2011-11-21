@@ -7,8 +7,8 @@ with its own programmation language. See my othre project Calculette for an exam
 
 But now, let's code !
 
-Statuts
-=======
+Development status
+==================
 
 It can accept games, and play.
 
@@ -18,7 +18,6 @@ attacking ennemies in the way.
 
 It is the basic loop weewar-ai put in it :)
 Have to code the AI part now :)
-
 
 Setup
 =====
@@ -36,10 +35,13 @@ The important part is the login:key.
 The name will be used to switch account easily.
 You can choose what you want as a name.
 
+Start
+=====
+
 to start a interatice prompt
   ruby main.rb
-to start the bot alone
-  ruby weewar.rb
+to start the bot alone (start a infinite loop)
+  ruby lib/weewar.rb
 
 Thanks
 ======

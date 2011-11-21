@@ -24,6 +24,7 @@ module Weewar
     def do_loop
       loop do
         begin
+          t = Time.now
           just_played = false
           puts '================= loop begin'
           # get HQ
@@ -31,58 +32,61 @@ module Weewar
           raise r.body if r.code!="200"
           data = Utils.xmls(r.body, {'ForceArray' => ['game']})
           puts "got HQ"
-          data['game'].each { |g|
-            puts "game: #{g['name']}: #{g['state']} #{g['factionState']}"
-            #next if g['inNeedOfAttention'] != "true"
-            # invites
-            case g['state']
-            when 'lobby'
-              case
-              when g['factionState'] != 'accepted'
-                if g['rated']=='false'
+          if data['game']
+            data['game'].each { |g|
+              puts "game: #{g['name']}: #{g['state']} #{g['factionState']}"
+              #next if g['inNeedOfAttention'] != "true"
+              # invites
+              case g['state']
+              when 'lobby'
+                case
+                when g['factionState'] != 'accepted'
+                  if g['rated']=='false'
+                    accept_invitation(g['id'])
+                    puts '  accepted'
+                  else
+                    decline_invitation(g['id'])
+                    puts '  declined'
+                  end
+                end
+              when 'running'
+                if g['factionState'] == "created"
                   accept_invitation(g['id'])
                   puts '  accepted'
-                else
-                  decline_invitation(g['id'])
-                  puts '  declined'
                 end
-              end
-            when 'running'
-              if g['factionState'] == "created"
-                accept_invitation(g['id'])
-                puts '  accepted'
-              end
-              if g['inNeedOfAttention'] == "true"
-                puts '  will play'
-                begin
-                  play(g['id'])
-                rescue Exception=>e
-                  b = find(g['id'])
-                  if b
-                    b.game.chat("Ooops. Finishing my turn due to this error: #{e.message}")
-                    b.game.finish_turn
+                if g['inNeedOfAttention'] == "true"
+                  puts '  will play'
+                  begin
+                    play(g['id'])
+                  rescue Exception=>e
+                    b = find(g['id'])
+                    if b
+                      b.game.chat("Ooops. Finishing my turn due to this error: #{e.message}")
+                      b.game.finish_turn
+                    end
+                    puts "While playing: #{e.message}"
+                    puts e.backtrace
+                    puts "game data is:"
+                    p g
                   end
-                  puts "While playing: #{e.message}"
-                  puts e.backtrace
-                  puts "game data is:"
-                  p g
+                  just_played = true
+                else
+                  puts '  not my turn'
                 end
-                just_played = true
+              when 'finished'
+                #puts '  removing'
+                #remove_game(g['id'])
               else
-                puts '  not my turn'
+                puts "don't know how to handle this state: #{g['state']}"
               end
-            when 'finished'
-              #puts '  removing'
-              #remove_game(g['id'])
-            else
-              puts "don't know how to handle this state: #{g['state']}"
-            end
-            }
-          secs = 60
+              }
+          end # if data
+          secs = 60-(Time.now-t)
+          secs = 0 if secs < 0
           puts "Sleeping #{secs}s..."
           sleep(secs)
         rescue Interrupt=>e # Ctrl-C
-          puts " again to exit, anything else to loop"
+          puts " again to exit, anything else to loop #{Time.now-t}"
           i = gets.chomp
           break if i == "exit"
         rescue Exception=>e

@@ -89,9 +89,10 @@ module Weewar
 
     # Issues a command to build the given Unit type on this Hex.
     #   base.build :linf
+    # TODO: do not send command directly
     def build( unit_type )
       @game.send "<build x='#{@x}' y='#{@y}' type='#{Unit::TYPE_FOR_SYMBOL[unit_type]}'/>"
-      @game.refresh
+      # @game.refresh # Mick
     end
 
     # Whether or not this Hex is occupied (by a Unit).

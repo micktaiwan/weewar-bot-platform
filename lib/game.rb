@@ -22,11 +22,11 @@ module Weewar
     # with the given id number.
     #   game = Game.new(132, {:local_game=>true})
     def initialize(game_id, options={})
+      puts "*** Initializing Game"
       @id           = game_id
       @options      = options
       @method       = 'gamestate'
       super({'ForceArray' => ['faction', 'player', 'terrain', 'unit']})
-      refresh
     end
 
     # TODO
@@ -62,6 +62,7 @@ module Weewar
     # All internal variables are updated to match.
     #   my_game.refresh
     def refresh
+      puts "*** Refreshing game state"
       set_data(get) if !@options[:local_game]
       @map    = Map.new(self, self[:map].to_i, @options) if !@map
       @name   = self['name']
@@ -76,32 +77,36 @@ module Weewar
       @initial_credits = self['initialCredits']
       @playing_since = Time.parse( self['playingSince'] )
 
-      @units = Array.new
+      @units    = Array.new
       @factions = Array.new
+
       self['factions']['faction'].each_with_index do |faction_xml,ordinal|
         faction = Faction.new( self, faction_xml, ordinal )
         @factions << faction
-        #p faction_xml
-        next if !faction_xml['unit'] # happens when no more unit
-        faction_xml['unit'].each do |u|
-          hex = @map.hex(u['x'].to_i, u['y'].to_i)
-          unit = Unit.new(
-            self,
-            hex,
-            faction,
-            u['type'],
-            u['quantity'].to_i,
-            u['finished'] == 'true',
-            u['capturing'] == 'true'
-          )
-          @units << unit
-          hex.unit = unit
+
+        if faction_xml['unit']
+          faction_xml['unit'].each do |u|
+            hex = @map.hex(u['x'].to_i, u['y'].to_i)
+            unit = Unit.new(
+              self,
+              hex,
+              faction,
+              u['type'],
+              u['quantity'].to_i,
+              u['finished'] == 'true',
+              u['capturing'] == 'true'
+            )
+            @units << unit
+            hex.unit = unit
+          end
         end
-        next if !faction_xml['terrain'] # happens when no more terrain
-        faction_xml['terrain'].each do |terrain|
-          hex = @map.hex(terrain['x'], terrain['y'])
-          if hex.type == :base
-            hex.faction = faction
+
+        if faction_xml['terrain'] # happens when no more terrain
+          faction_xml['terrain'].each do |terrain|
+            hex = @map.hex(terrain['x'], terrain['y'])
+            if hex.type == :base
+              hex.faction = faction
+            end
           end
         end
       end

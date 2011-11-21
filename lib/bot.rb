@@ -52,24 +52,28 @@ module Weewar
         return
       end
 
-      destination = game.neutral_bases.find_all { |b| !b.occupied?}.first
-      destination = game.enemy_bases.first if !destination
       enemies     = game.enemy_units
-
       # Move units
       units.each do |unit|
         # Find a place to go, things to shoot
-        unit.move_to(destination,:also_attack => enemies)
+        destination = unit.nearest(game.neutral_bases.find_all { |b| !b.occupied?})
+        destination = unit.nearest(game.enemy_bases) if !destination
+        destination = unit.nearest(enemies) if !destination
+        unit.move_to(destination,:also_attack => enemies) if destination
+        # TODO: if can't move, repair
       end
       # Build
-      #puts game.my_bases.size
       game.my_bases.each do |base|
-        p base.unit
         next if base.occupied?
-        if i.can_afford?( :linf )
-          base.build :linf
-        end
+        [:tank, :raider, :linf].each { |unit|
+          if i.can_afford?( unit )
+            base.build :linf
+            break
+          end
+          }
       end
+
+
       # End
       puts "  Ending turn for game #{game.id}"
       game.finish_turn
