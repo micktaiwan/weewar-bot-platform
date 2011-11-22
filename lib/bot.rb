@@ -12,7 +12,7 @@ module Weewar
     attr_reader :game_id, :game, :account
 
     def initialize(account, game_id)
-      @account = account
+      @account  = account
       @game_id  = game_id
       @game     = Game.new(self, @game_id, {:local_game=>$local_game})
       #@states   = []
@@ -23,7 +23,7 @@ module Weewar
     # *  :analyse_only=>true: will not send any command to the server
     def play(options)
       @game.refresh
-      puts "  Game #{@game_id} (map #{@game.map[:id]}: #{@game[:name]}) is #{@game[:state]}"
+      puts "  Game #{@game['name']} #@game_id (map #{@game.map[:id]}: #{@game[:name]}) is #{@game[:state]}"
       return if @game[:state].to_s != 'running'
       puts "  Players: #{@game[:players]['player'].map{|h| h['content']}.join(', ')}"
       if(options[:analyse_only])
@@ -43,11 +43,16 @@ module Weewar
       # FIXME: finished means the unit turn (not the game) is over so surrending if there is no available unit is dumb
       #if(units.size==0)
       #  puts "  Surrending"
-      #  p game.surrender # can't not surrender
+      #  p game.surrender # can't surrender
       #  return
       #end
 
       # TODO: we check the eval function points instead
+
+      # if we are in the process of taking a base
+      return false if @game.my_units.find_all{ |u| u.capturing?}.size > 0
+      return true if (@game.my_units.size*3 < @game.enemy_units.size) and
+        @game.my_bases.size < @game.enemy_bases
       false
     end
 

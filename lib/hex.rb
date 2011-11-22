@@ -43,6 +43,7 @@ module Weewar
       table.search( 'tr' ).each do |tr|
         name = tr.at( 'b' ).inner_text
         type = SYMBOL_FOR_NAME[name]
+        #puts type
         if !type
           raise "Unknown terrain type: #{name}"
         else
@@ -53,6 +54,7 @@ module Weewar
           }
         end
       end
+      #exit
     end
 
     # An internal method used by initialize_specs.

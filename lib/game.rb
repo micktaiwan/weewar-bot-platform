@@ -16,23 +16,23 @@ module Weewar
   class Game < XmlData
     attr_reader :id, :name, :round, :state, :pending_invites, :pace, :type,
       :url, :map, :map_url, :credits_per_base, :initial_credits, :playing_since,
-      :players, :units, :factions, :bot, :account
+      :players, :units, :factions, :bot, :account, :disabled_units
     attr_accessor :last_attacked
 
     # Instantiate a new Game instance corresponding to the weewar game
     # with the given id number.
     #   game = Game.new(132, {:local_game=>true})
     def initialize(bot, game_id, options={})
-      puts "*** Initializing Game"
+      puts "! Initializing Game"
       @bot          = bot
       @account      = bot.account
       @id           = game_id
       @options      = options
       @method       = 'gamestate'
       super({'ForceArray' => ['faction', 'player', 'terrain', 'unit']})
+      @refreshed = false
     end
 
-    # TODO
     def me_to_play?
       player = get_player(@account.login)
       if !player
@@ -65,7 +65,7 @@ module Weewar
     # All internal variables are updated to match.
     #   my_game.refresh
     def refresh
-      puts "*** Refreshing game state"
+      puts "! Refreshing game state"
       set_data(get) if !@options[:local_game]
       @map    = Map.new(self, self[:map].to_i, @options) if !@map
       @name   = self['name']
@@ -79,6 +79,25 @@ module Weewar
       @credits_per_base = self['creditsPerBase']
       @initial_credits = self['initialCredits']
       @playing_since = Time.parse( self['playingSince'] )
+
+      # TODO: to refactor !
+      du = self['disabledUnitTypes']['type']
+      if du
+        @disabled_units = du.map{ |u|
+          s = Unit::SYMBOL_FOR_UNIT[u]
+          if !s
+            puts "**  no symbols for #{u}"
+            nil
+          else
+            s
+          end
+          }
+      else
+        @disabled_units = []
+      end
+      @disabled_units = @disabled_units.select{ |u| u}
+      print "  disabled units: "
+      p @disabled_units
 
       @units    = Array.new
       @factions = Array.new
@@ -113,6 +132,7 @@ module Weewar
           end
         end
       end
+      @refreshed = true
     end
 
     # Sends some command XML for this game to the server.  You should
@@ -157,7 +177,11 @@ module Weewar
     # The Faction of the given player.
     #   pistos_faction = game.faction_for_player 'Pistos'
     def faction_for_player( player_name )
-      @factions.find { |f| f.player_name == player_name }
+      raise "game not refreshed" if !@refreshed
+      raise "no factions" if !@factions
+      rv = @factions.find { |f| f.player_name == player_name }
+      raise "no faction for player #{player_name}. map is #{@map.id}" if ! rv
+      rv
     end
 
     # Your AI's Faction in this game.
@@ -209,7 +233,7 @@ module Weewar
     end
 
     def my_capturers
-      my_units.find_all{ |u| u.can_capture? and !u.has_goal?}
+      my_units.find_all{ |u| u.can_capture? }#and !u.has_goal?}
     end
 
     def my_free_bases

@@ -26,8 +26,15 @@ module Weewar
       'Heavy Artillery' => :hart,
       'DFA' => :dfa,
       'Hovercraft' => :hover,
-      #'capturing' => :capturing,
-    }
+      'Battleship' => :bship,
+      'Helicopter' => :heli,
+      'Submarine' => :sub,
+      'Destroyer' => :dest,
+      'Anti Aircraft' =>  :aa,
+      'Speedboat' => :sboat,
+      'Bomber' =>  :bomber,
+      'Jet' => :jet
+      }
 
     TYPE_FOR_SYMBOL = {
       :linf => 'Trooper',
@@ -37,7 +44,18 @@ module Weewar
       :htank => 'Heavy Tank',
       :lart => 'Light Artillery',
       :hart => 'Heavy Artillery',
-      # TODO: rest
+      :hover => 'Hovercraft',
+      'Assault Artillery' => :aart,
+      :bers => 'Berserker',
+      :dfa => 'DFA',
+      :bship=> 'Battleship',
+      :heli => 'Helicopter',
+      :sub => 'Submarine',
+      :dest =>'Destroyer',
+      :aa=>'Anti Aircraft',
+      :sboat=>'Speedboat',
+      :bomber=>'Bomber',
+      :jet=>'Jet'
     }
 
     UNIT_CLASSES = {
@@ -53,6 +71,7 @@ module Weewar
       :dfa => :hard,
       :capturing => :soft,
       :hover => :amphibic,
+      :bship => :boat,
     }
 
     # <Pistos> These need to be checked, I was just going by memory
@@ -100,6 +119,30 @@ module Weewar
       :bomber => 3,
       :aa => 1,
     }
+
+    # TODO: should be taken from the specifications page
+    STRENGTH = {
+      :linf => 6,
+      :hinf => 6,
+      :raider => 6,
+      :tank => 10,
+      :hover => 8,
+      :htank => 14,
+      :lart => 3,
+      :aart => 6,
+      :hart => 4,
+      :dfa => 4,
+      :bers => 14,
+      :sboat => 6,
+      :dest => 12,
+      :bship => 14,
+      :sub => 10,
+      :jet => 12,
+      :heli => 10,
+      :bomber => 10,
+      :aa => 4,
+    }
+
 
     CAPTURERS = [:linf, :hover, :hinf]
 
@@ -255,7 +298,11 @@ module Weewar
       raise "hex.type is nil" if hex.nil?
 
       specs_for_type = Hex.terrain_specs[hex.type]
-      raise "No specs for type '#{hex.type.inspect}'" if specs_for_type.nil?
+      if specs_for_type.nil?
+        puts "**  No specs for type '#{hex.type}' hex: #{hex}"
+        exit
+        return 4
+      end
       tag(specs_for_type[:movement][unit_class]) { |rv|
         raise "no specs for #{unit_class}" if !rv
         }
@@ -286,22 +333,15 @@ module Weewar
     #
     #   best_path = my_trooper.shortest_path(enemy_base)
     def shortest_path(dest, exclusions = [])
-      begin
-        exclusions ||= []
-        previous = shortest_paths(exclusions)
-        s = []
-        u = dest.hex
-        while previous[u]
-          s.unshift u
-          u = previous[u]
-        end
-        s
-      rescue Exception => e
-        puts e
-        puts e.backtrace
-        #p @game.data
-        return []
+      exclusions ||= []
+      previous = shortest_paths(exclusions)
+      s = []
+      u = dest.hex
+      while previous[u]
+        s.unshift u
+        u = previous[u]
       end
+      s
     end
 
     # Calculate all shortest paths from the Unit's current Hex to every other
@@ -310,16 +350,16 @@ module Weewar
     # Most AIs will only need to make use of the shortest_path method instead.
     def shortest_paths(exclusions = [])
       # Initialization
+      start = Time.now
       exclusions ||= []
       source    = hex
       dist      = Hash.new
       previous  = Hash.new
       q         = []
       @game.map.each do |h|
-        if not exclusions.include? h
-          dist[h] = INFINITY
-          q << h
-        end
+        next if exclusions.include? h
+        dist[h] = INFINITY
+        q << h
       end
       dist[source] = 0
 
@@ -337,6 +377,7 @@ module Weewar
         end
       end
 
+      puts "     #{previous.size} paths, time: #{Time.now-start}"
       # Results
       previous
     end
@@ -362,7 +403,7 @@ module Weewar
         else
           message = "RECEIVED:\n#{response}"
         end
-        raise "Failed to execute:\n#{command}\n#{message}"
+        raise "**  Failed to execute:\n#{command}\n#{message}"
       end
       response
     end
@@ -402,9 +443,10 @@ module Weewar
     #     :no_capture => true
     #  )
     def move_to(destination, options = {})
-      raise "destination is nil" if !destination
+      raise "**  destination is nil" if !destination
       command = ""
       options[:exclusions] ||= []
+      puts "    destination is #{destination}, #{options[:exclusions].size} exclusions"
 
       new_hex = @hex
 
@@ -413,7 +455,7 @@ module Weewar
 
         path = shortest_path(destination, options[:exclusions])
         if !path or path.empty?
-          $stderr.puts "No path from #{self} to #{destination}"
+          $stderr.puts "*   No path from #{self} to #{destination}"
         else
           dests = destinations
           new_dest = path.pop
@@ -423,7 +465,8 @@ module Weewar
         end
 
         if new_dest.nil?
-          $stderr.puts "    Can't move #{self} to #{destination}"
+          $stderr.puts "*   Can't move #{self} to #{destination}"
+          return false
         else
           o = new_dest.unit
           if o and allied_with?(o)
@@ -450,7 +493,7 @@ module Weewar
           else
             preferred = [also_attack] & enemies
           end
-          target = preferred.first# || enemies.random
+          target = preferred.sort_by{|u| u.hp}.first
 
           if target
             command << "<attack x='#{target.x}' y='#{target.y}'/>"
@@ -493,8 +536,8 @@ module Weewar
       xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })['attack']
       #Utils.log_debug("process_attack xml: "+xml.inspect)
       #Utils.log_debug("process_attack xml_text: "+xml_text.inspect)
-      if !xml['target']
-        puts "process_attack has no target properties: #{xml.inspect}"
+      if !xml or !xml['target']
+        puts "process_attack has no xml or no target properties. xml=#{xml_text}"
         return
       end
       if xml['target'] =~ /\[(\d+),(\d+)\]/
@@ -529,17 +572,11 @@ module Weewar
       true
     end
 
-    def distance(a,b)
-      x = a.hex.x-b.hex.x
-      y = a.hex.y-b.hex.y
-      Math.sqrt(x*x+y*y)
-    end
-
-    def nearest(units)
-      d = 99999
+    def nearest(units, exclusions=[])
+      d = INFINITY
       nearest = nil
       units.each { |u|
-        nd = distance(self,u)
+        nd = shortest_path(u, exclusions-[u]).size
         if nd < d
           d = nd
           nearest = u
@@ -553,6 +590,14 @@ module Weewar
     def repair
       send "<repair/>"
       @hp += REPAIR_RATE[@type]
+    end
+
+    def strength
+      STRENGTH[@type]
+    end
+
+    def cost
+      UNIT_COSTS[@type]
     end
   end
 end

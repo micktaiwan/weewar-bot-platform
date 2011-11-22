@@ -16,12 +16,12 @@ class House
     action {"eating"}
 
     goal :make_meal
-    precond :know_cooking?, :take_lessons
-    precond :have_ingredients?, :buy_ingredients
+    precond nil, :take_lessons # force action
+    precond :have_ingredients?, :buy_ingredients, :my_ingredient
     action {"making meal"}
 
     goal :buy_ingredients
-    action {"buying ingredients"}
+    action { |args| "buying #{args.size}"}
 
     goal :take_lessons
     action {"taking lessons"}
@@ -40,12 +40,12 @@ class House
     false
   end
 
-  def set_action(goal)
-    goal.set_action(method(:test_action))
+  def my_ingredient
+    "soup"
   end
 
-  def run_plan(goal)
-    @plan.run(goal)
+  def run_plan(goal, *args)
+    @plan.run(goal, args)
   end
 
 end

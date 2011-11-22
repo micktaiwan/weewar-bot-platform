@@ -56,5 +56,10 @@ module Weewar
     def to_s
       @player_name
     end
+
+    def unit_points
+      units.inject(0) { |sum, i| sum += i.strength}
+    end
   end
 end
+

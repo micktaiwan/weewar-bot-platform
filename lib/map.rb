@@ -19,9 +19,9 @@ module Weewar
       'Woods' => :woods,
       'Swamp' => :swamp,
       'Base' => :base,
-      'harbor' => :harbour,
+      'Harbor' => :harbour,
       'repairshop' => :repairshop,
-      'airfield' => :airfield,
+      'Airfield' => :airfield,
       'red_city' => :red_base,
       'blue_city' => :blue_base,
       'purple_city' => :purple_base,
@@ -69,7 +69,9 @@ module Weewar
         x = t['x'].to_i
         @cols[x] ||= Hash.new
         y = t['y'].to_i
-        @cols[x][y] = Hex.new(@game,SYMBOL_FOR_TERRAIN[t['type']],x,y)
+        symb = SYMBOL_FOR_TERRAIN[t['type']]
+        raise "no symbols for #{t['type']}" if !symb
+        @cols[x][y] = Hex.new(@game,symb,x,y)
       end
     end
 

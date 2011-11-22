@@ -13,8 +13,16 @@ module Weewar
       @plan << Goal.new(name)
     end
 
-    def precond(condition, subgoal_name)
-      @plan[-1].add_precond(method(condition), subgoal_name)
+    def precond(condition, subgoal_name, *args)
+      if !condition # force action
+        @plan[-1].add_precond(false, subgoal_name, arguments(*args))
+      else
+        @plan[-1].add_precond(method(condition), subgoal_name, arguments(*args))
+      end
+    end
+
+    def arguments(*args)
+      args.map { |a| method(a)}
     end
 
     def action(&block)

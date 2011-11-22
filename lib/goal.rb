@@ -19,8 +19,8 @@ module Weewar
       @goals[index]
     end
 
-    def run(goal)
-      find_goal(goal).run
+    def run(goal, args=[])
+      find_goal(goal).run(args)
     end
 
     def find_goal(name)
@@ -38,36 +38,36 @@ module Weewar
     attr_reader   :name
 
     def initialize(name)
-      @name     = name.to_sym
-      @preconds = []
+      @name         = name.to_sym
+      @preconds     = []
     end
 
     # if a precondition is not satified, the goal can not be done
     # if a precondition subgoal can be done, then the goal is in progress
-    def add_precond(condition, subgoal)
-      @preconds << Precond.new(condition, subgoal)
+    def add_precond(condition, subgoal, args)
+      @preconds << Precond.new(condition, subgoal, args)
     end
 
     def set_action(action)
       @action = action
     end
 
-    def run
-      run_preconds << run_action
+    def run(args)
+      p = run_preconds
+      return run_action(args) if p.size == 0
+      { run_action(args) =>  p}
     end
 
-    def run_action
-      #puts "#{@name}: running action"
+    def run_action(args)
       raise "no action for #{@name}" if @action.nil?
-      @action.call
+      @action.call(args.map{|a| a.call} )
     end
 
     # return commands for each precond
     def run_preconds
       actions = []
       @preconds.each { |p|
-        rv = p.condition.call
-        actions << @plan.find_goal(p.subgoal).run if !rv # the precond fails
+        actions << @plan.find_goal(p.subgoal).run(p.subgoal_args) if !p.condition or !p.condition.call # the precond fails
         }
       actions
     end
@@ -75,10 +75,11 @@ module Weewar
   end
 
   class Precond
-    attr_reader :subgoal, :condition
-    def initialize(condition, subgoal)
-      @condition  = condition
-      @subgoal    = subgoal
+    attr_reader :subgoal, :condition, :subgoal_args
+    def initialize(condition, subgoal, args)
+      @condition    = condition
+      @subgoal      = subgoal
+      @subgoal_args = args
     end
   end
 

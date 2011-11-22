@@ -70,7 +70,7 @@ module Weewar
       data = get_hq
       if data['game']
         data['game'].each { |g|
-          puts " -\"#{g['name']}\": #{g['state']}/#{g['factionState']} http://weewar.com/game/#{g['id']}"
+          puts "\"#{g['name']}\": #{g['state']}/#{g['factionState']} http://weewar.com/game/#{g['id']}"
           #next if g['inNeedOfAttention'] != "true"
           # invites
           case g['state']

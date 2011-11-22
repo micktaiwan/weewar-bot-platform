@@ -24,6 +24,7 @@ module Weewar
   class Weewar
 
     def initialize
+      puts "***************** LOCAL GAME****************" if $local_game
       Utils.init
       # an account manage invitations (not begun game) and finished games
       init_accounts

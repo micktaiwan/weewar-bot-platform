@@ -49,39 +49,27 @@ Thanks
 lot of code by Pistos:
   https://github.com/Pistos/weewar-ai
 
-
 TODO
 ====
 
 ordered by priority
 
-process_attack
-While playing: undefined method `[]' for nil:NilClass
-./lib/../bots/../lib/unit.rb:496:in `process_attack'
-./lib/../bots/../lib/unit.rb:479:in `move_to'
-./lib/../bots/chuckbot.rb:31:in `take_turn'
-./lib/../bots/chuckbot.rb:24:in `each'
-./lib/../bots/chuckbot.rb:24:in `take_turn'
-./lib/../bots/../lib/bot.rb:36:in `play'
-./lib/account.rb:49:in `play'
-./lib/account.rb:100:in `process_hq_once'
-./lib/account.rb:72:in `each'
-./lib/account.rb:72:in `process_hq_once'
-./lib/weewar.rb:60:in `do_loop'
-./lib/weewar.rb:60:in `each'
-./lib/weewar.rb:60:in `do_loop'
-./lib/weewar.rb:56:in `loop'
-./lib/weewar.rb:56:in `do_loop'
-./lib/weewar.rb:123
+  capture: ai_ChuckBot: linf@(29,3) => base @ (28,2)
+  ai_ChuckBot: linf@(29,3) NOT FINISHED:
+	  <?xml version="1.0" encoding="UTF-8"?>
+  <error>Unit is done.</error>
 
+  While playing: **  Failed to execute:
+  <unit x='29' y='3'><move x='28' y='2'/><capture/></unit>
+  ERROR from server: Unit is done.
+  ./lib/../bots/../lib/unit.rb:406:in `send'
+  ./lib/../bots/../lib/unit.rb:515:in `move_to'
 
-
-
+- pathfinding very slow on big maps
 - generate all xml first and send all xml at once to server
 - Can't move ai_ChuckBot: linf@(3,3) to base @ (5,5)
   if pathfinder can't find a way because of a movable unit, it shall find the target closest hex to go.
   or at least there should be an options for.
-- better pathfinding, take into account the terrains
 - stop calling helping methods from weewar.com, the bot shall calculate all by itself
 - Code better AI based on Bot.rb !
 

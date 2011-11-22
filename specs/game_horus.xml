@@ -1,0 +1,74 @@
+<game id="338556">
+<id>338556</id>
+<name>Botanic Troubles</name>
+<round>13</round>
+<state>running</state>
+<pendingInvites>false</pendingInvites>
+<pace>86400</pace>
+<type>Basic</type>
+<url>http://weewar.com/game/338556</url>
+<rated>false</rated>
+<since>1 hour 53 minutes</since>
+<sinceSeconds>6788</sinceSeconds>
+<players>
+<player index="0">ai_horus</player>
+<player index="1" current="true">MickTaiwan</player>
+</players>
+<disabledUnitTypes>
+<type>Heavy Trooper</type>
+<type>Speedboat</type>
+<type>Hovercraft</type>
+<type>Anti Aircraft</type>
+<type>Assault Artillery</type>
+<type>Helicopter</type>
+<type>Heavy Artillery</type>
+<type>Heavy Tank</type>
+<type>Jet</type>
+<type>Destroyer</type>
+<type>Bomber</type>
+<type>Berserker</type>
+<type>Submarine</type>
+<type>DFA</type>
+<type>Battleship</type>
+</disabledUnitTypes>
+<map>2</map>
+<mapUrl>http://weewar.com/map/2</mapUrl>
+<creditsPerBase>100</creditsPerBase>
+<initialCredits>250</initialCredits>
+<playingSince>Thu Nov 17 21:17:57 UTC 2011</playingSince>
+<playingSinceMillis>1321564677790</playingSinceMillis>
+<factions>
+<faction current="true" playerId="102472" playerName="ai_horus" offerPeace="false" state="playing">
+<unit x="9" y="6" type="Tank" quantity="4" finished="false"/>
+<unit x="12" y="7" type="Tank" quantity="8" finished="false"/>
+<unit x="15" y="8" type="Raider" quantity="7" finished="false"/>
+<unit x="15" y="15" type="Raider" quantity="3" finished="false"/>
+<unit x="16" y="3" type="Trooper" quantity="10" finished="false"/>
+<unit x="16" y="8" type="Raider" quantity="7" finished="false"/>
+<unit x="16" y="12" type="Trooper" quantity="10" finished="false"/>
+<terrain x="12" y="7" type="Base" finished="false"/>
+<terrain x="16" y="3" type="Base" finished="false"/>
+</faction>
+<faction credits="150" type="user" emailNotify="false" playerId="102445" playerName="MickTaiwan" offerPeace="false" state="playing">
+<unit x="4" y="14" type="Light Artillery" quantity="10" finished="false"/>
+<unit x="6" y="2" type="Light Artillery" quantity="10" finished="false"/>
+<unit x="6" y="10" type="Tank" quantity="10" finished="false"/>
+<unit x="7" y="7" type="Raider" quantity="8" finished="false"/>
+<unit x="7" y="8" type="Trooper" quantity="10" finished="false"/>
+<unit x="8" y="6" type="Trooper" quantity="3" finished="false"/>
+<unit x="8" y="7" type="Tank" quantity="6" finished="false"/>
+<unit x="8" y="10" type="Light Artillery" quantity="10" finished="false"/>
+<unit x="9" y="12" type="Tank" quantity="10" finished="false"/>
+<unit x="12" y="11" type="Trooper" quantity="10" finished="false"/>
+<unit x="12" y="14" type="Tank" quantity="4" finished="false"/>
+<unit x="13" y="9" type="Light Artillery" quantity="10" finished="false"/>
+<unit x="13" y="15" type="Light Artillery" quantity="10" finished="false"/>
+<unit x="14" y="8" type="Tank" quantity="7" finished="false"/>
+<unit x="14" y="15" type="Tank" quantity="7" finished="false"/>
+<terrain x="3" y="2" type="Base" finished="false"/>
+<terrain x="4" y="14" type="Base" finished="false"/>
+<terrain x="5" y="5" type="Base" finished="false"/>
+<terrain x="8" y="10" type="Base" finished="false"/>
+</faction>
+</factions>
+</game>

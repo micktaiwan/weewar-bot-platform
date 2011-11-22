@@ -5,10 +5,9 @@ module Weewar
   #this part of the class will analyse a state of a game (which is a Game instance in itself)
   class Bot
 
-    def analyse(state)
-      @state = state
-      factions = @state.factions
-      my_units = @state.my_faction.units
+    def analyse
+      factions = @game.factions
+      my_units = @game.my_faction.units
 
       puts "There are #{factions.size} factions"
       factions.each do |f|
@@ -26,14 +25,13 @@ module Weewar
     # if I have one linf against 2 linf:
     # 1 - 2 = -1
     def board_score
-      "not done"
-      #my_points = @state.my_faction.unit_points
-      #my_points - others_factions_points.max
-    end
-
-    def others_factions_points
-      #@state.factions.each { |f|
-      #Utils.credentials[:login]
+      my_points = @game.my_faction.unit_points
+      score = 99999
+      (@game.factions-[@game.my_faction]).each { |f|
+        diff = my_points - f.unit_points
+        score = diff if diff < score
+        }
+      score
     end
 
   end
