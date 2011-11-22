@@ -23,21 +23,17 @@ module Weewar
     # *  :analyse_only=>true: will not send any command to the server
     def play(options)
       @game.refresh
-      #s = add_state
-      # find he we can play
-      #s = @states.last
-      s = @game
-      puts "  Game #{@game_id} (map #{s.map[:id]}: #{s[:name]}) is #{s[:state]}"
-      return if s[:state].to_s != 'running'
-      puts "  Players: #{s[:players]['player'].map{|h| h['content']}.join(', ')}"
+      puts "  Game #{@game_id} (map #{@game.map[:id]}: #{@game[:name]}) is #{@game[:state]}"
+      return if @game[:state].to_s != 'running'
+      puts "  Players: #{@game[:players]['player'].map{|h| h['content']}.join(', ')}"
       if(options[:analyse_only])
         puts 'analyse only'
-        analyse(s)
+        analyse(@game)
       else
-        if !s.me_to_play?
-          puts "  not my turn yet (game: #{s[:name]} / ##{@game_id})"
+        if !@game.me_to_play?
+          puts "  not my turn yet (game: #{@game[:name]} / ##{@game_id})"
         else
-          take_turn(s)
+          take_turn
         end
       end
     end

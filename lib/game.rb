@@ -5,6 +5,7 @@ require File.dirname(__FILE__) + '/utils'
 require File.dirname(__FILE__) + '/player'
 require File.dirname(__FILE__) + '/faction'
 require File.dirname(__FILE__) + '/unit'
+require File.dirname(__FILE__) + '/xml_data'
 
 module Weewar
 
@@ -169,6 +170,10 @@ module Weewar
       faction_for_player(@account.login)
     end
 
+    def my_units
+      my_faction.units
+    end
+
     # An Array of the Units not belonging to your AI.
     #   bad_guys = game.enemy_units
     def enemy_units
@@ -198,8 +203,17 @@ module Weewar
     def enemy_bases
       @map.bases.find_all { |b| b.faction != my_faction }
     end
+
     def neutral_bases
       bases_of(nil)
+    end
+
+    def my_capturers
+      my_units.find_all{ |u| u.can_capture? and !u.has_goal?}
+    end
+
+    def my_free_bases
+      my_bases.find_all{|b| !b.finished? and !b.unit}
     end
 
   end

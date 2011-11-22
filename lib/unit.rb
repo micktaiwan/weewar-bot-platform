@@ -1,5 +1,3 @@
-# https://github.com/Pistos/weewar-ai/blob/master/lib/weewar-ai/unit.rb
-
 module Weewar
 
   # An instance of the Unit class corresponds to a single unit in a game.
@@ -102,6 +100,8 @@ module Weewar
       :bomber => 3,
       :aa => 1,
     }
+
+    CAPTURERS = [:linf, :hover, :hinf]
 
     INFINITY = 99999999
 
@@ -252,9 +252,10 @@ module Weewar
     # normally need to use this yourself.
     def entrance_cost(hex)
       raise "hex is nil" if hex.nil?
+      raise "hex.type is nil" if hex.nil?
 
       specs_for_type = Hex.terrain_specs[hex.type]
-      raise "No specs for type '#{hex.type.inspect}': #{Hex.terrain_specs.inspect}" if specs_for_type.nil?
+      raise "No specs for type '#{hex.type.inspect}'" if specs_for_type.nil?
       tag(specs_for_type[:movement][unit_class]) { |rv|
         raise "no specs for #{unit_class}" if !rv
         }
@@ -298,9 +299,8 @@ module Weewar
       rescue Exception => e
         puts e
         puts e.backtrace
-        p dest
-        p exclusions
         #p @game.data
+        return []
       end
     end
 
@@ -327,12 +327,12 @@ module Weewar
       while not q.empty?
         u = q.inject { |best,h| dist[h] < dist[best] ? h : best }
         q.delete u
-        @game.map.hex_neighbours(u).each do |v|
-          next if exclusions.include? v
-          alt = dist[u] + entrance_cost(v)
-          if alt < dist[v]
-            dist[v]     = alt
-            previous[v] = u
+        @game.map.hex_neighbours(u).each do |h|
+          next if exclusions.include? h
+          alt = dist[u] + entrance_cost(h)
+          if alt < dist[h]
+            dist[h]     = alt
+            previous[h] = u
           end
         end
       end
@@ -412,7 +412,7 @@ module Weewar
         # Travel
 
         path = shortest_path(destination, options[:exclusions])
-        if path.empty?
+        if !path or path.empty?
           $stderr.puts "No path from #{self} to #{destination}"
         else
           dests = destinations

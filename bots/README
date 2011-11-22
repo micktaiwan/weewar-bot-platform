@@ -1,1 +1,29 @@
+Bots repository
+===============
+
 Everything in this folder should be bot classes and will be loaded by the Weewar instance.
+
+
+Implementing a bot
+==================
+
+Each bot shall implement a take_turn method.
+See examples in this directory.
+
+def take_turn(game)
+  puts "  Taking turn for game #{game.id}"
+
+  i = me = my = game.my_faction
+  units     = my.units.find_all { |u| not u.finished? }
+  enemies   = game.enemy_units
+
+  # Move units
+  units.each do |unit|
+    # Find a place to go, things to shoot
+    destination = unit.nearest(game.neutral_bases.find_all { |b| !b.occupied?})
+    destination = unit.nearest(game.enemy_bases) if !destination
+    destination = unit.nearest(enemies) if !destination
+    unit.move_to(destination,:also_attack => enemies) if destination
+  end
+end
+

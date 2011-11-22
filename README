@@ -3,7 +3,7 @@ Weewar Bot Platform
 
 For now, it is just a Weewar bot doing nothing but a very basic and lame strategy.
 Later this will become a platform to develop Weewar Bots (I hope!)
-with its own programmation language. See my othre project Calculette for an example.
+with its own programmation language. See my other project Calculette for an example.
 
 But now, let's code !
 
@@ -55,8 +55,29 @@ TODO
 
 ordered by priority
 
-- blog entry !
-- see if we can not generate all xml first and send all xml at once to server
+process_attack
+While playing: undefined method `[]' for nil:NilClass
+./lib/../bots/../lib/unit.rb:496:in `process_attack'
+./lib/../bots/../lib/unit.rb:479:in `move_to'
+./lib/../bots/chuckbot.rb:31:in `take_turn'
+./lib/../bots/chuckbot.rb:24:in `each'
+./lib/../bots/chuckbot.rb:24:in `take_turn'
+./lib/../bots/../lib/bot.rb:36:in `play'
+./lib/account.rb:49:in `play'
+./lib/account.rb:100:in `process_hq_once'
+./lib/account.rb:72:in `each'
+./lib/account.rb:72:in `process_hq_once'
+./lib/weewar.rb:60:in `do_loop'
+./lib/weewar.rb:60:in `each'
+./lib/weewar.rb:60:in `do_loop'
+./lib/weewar.rb:56:in `loop'
+./lib/weewar.rb:56:in `do_loop'
+./lib/weewar.rb:123
+
+
+
+
+- generate all xml first and send all xml at once to server
 - Can't move ai_ChuckBot: linf@(3,3) to base @ (5,5)
   if pathfinder can't find a way because of a movable unit, it shall find the target closest hex to go.
   or at least there should be an options for.

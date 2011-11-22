@@ -1,3 +1,4 @@
+require File.dirname(__FILE__) + '/xml_data'
 require File.dirname(__FILE__) + '/utils'
 require File.dirname(__FILE__) + '/hex'
 
