@@ -59,7 +59,7 @@ module Weewar
       rescue Errno::ENOENT
         # map does not exist, save map locally
         xml = get(@xml_options)
-        File.open(map_path,'w').write(xml)
+        File.open(map_path,'w')  {|f| f.write(xml) }
       end
       set_data(xml)
       @width  = self['width'].to_i

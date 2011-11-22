@@ -12,6 +12,12 @@ class Object
   end
 end
 
+class String
+  def sp(nb)
+    self + ' '*([0,nb-self.size].max)
+  end
+end
+
 module Weewar
 
   module Utils

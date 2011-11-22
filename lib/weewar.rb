@@ -59,7 +59,7 @@ module Weewar
           t = Time.now
           puts '================= loop begin'
           @bot_accounts.each { |a| a.process_hq_once }
-          secs = 60-(Time.now-t)
+          secs = (60-(Time.now-t)).round
           secs = 0 if secs < 0
           puts "Sleeping #{secs}s..."
           sleep(secs)

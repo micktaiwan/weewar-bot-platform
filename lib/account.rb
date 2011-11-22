@@ -70,7 +70,7 @@ module Weewar
       data = get_hq
       if data['game']
         data['game'].each { |g|
-          puts "\"#{g['name']}\": #{g['state']}/#{g['factionState']} http://weewar.com/game/#{g['id']}"
+          print "#{g['name'].sp(22)} #{g['state'].sp(8)}/ #{g['factionState'].sp(8)} http://weewar.com/game/#{g['id']} "
           #next if g['inNeedOfAttention'] != "true"
           # invites
           case g['state']
@@ -115,6 +115,7 @@ module Weewar
           when 'finished'
             #puts '  removing'
             #remove_game(g['id'])
+            puts
           else
             puts "Error: don't know how to handle this state: #{g['state']}"
           end

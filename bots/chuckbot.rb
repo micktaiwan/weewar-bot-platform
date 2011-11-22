@@ -35,7 +35,7 @@ module Weewar
           attacked += [dest] if dest
           move_options[:also_attack] = weakers
         end
-        moved = unit.move_to(dest,move_options) if dest
+        moved = unit.move_to(dest,move_options) if dest and !moved
         # TODO: to refactor...
 =begin
         if !moved

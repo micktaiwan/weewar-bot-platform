@@ -72,6 +72,13 @@ module Weewar
       :capturing => :soft,
       :hover => :amphibic,
       :bship => :boat,
+      :sboat => :speedboat,
+      :dest => :boat,
+      :sub => :sub,
+      :jet => :jet,
+      :heli => :air,
+      :bomber => :air,
+      :aa => :hard
     }
 
     # <Pistos> These need to be checked, I was just going by memory
@@ -140,7 +147,7 @@ module Weewar
       :jet => 12,
       :heli => 10,
       :bomber => 10,
-      :aa => 4,
+      :aa => 4
     }
 
 
@@ -299,12 +306,12 @@ module Weewar
 
       specs_for_type = Hex.terrain_specs[hex.type]
       if specs_for_type.nil?
-        puts "**  No specs for type '#{hex.type}' hex: #{hex}"
+        puts "**  No spec for type '#{hex.type}' hex: #{hex}"
         exit
         return 4
       end
       tag(specs_for_type[:movement][unit_class]) { |rv|
-        raise "no specs for #{unit_class}" if !rv
+        raise "no movement spec for #{unit_class}" if !rv
         }
     end
 
