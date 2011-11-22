@@ -71,6 +71,8 @@ ordered by priority
   if pathfinder can't find a way because of a movable unit, it shall find the target closest hex to go.
   or at least there should be an options for.
 - stop calling helping methods from weewar.com, the bot shall calculate all by itself
+- test if some paths are made of waters, if the strategy is to make boats
+- test if tere are air fields and if we need planes or not
 - Code better AI based on Bot.rb !
 
 Questions:
