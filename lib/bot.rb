@@ -52,7 +52,7 @@ module Weewar
       # if we are in the process of taking a base
       return false if @game.my_units.find_all{ |u| u.capturing?}.size > 0
       return true if (@game.my_units.size*3 < @game.enemy_units.size) and
-        @game.my_bases.size < @game.enemy_bases
+        @game.my_bases.size < @game.enemy_bases.size
       false
     end
 

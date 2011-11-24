@@ -59,9 +59,12 @@ module Weewar
           t = Time.now
           puts '================= loop begin'
           @bot_accounts.each { |a| a.process_hq_once }
-          secs = (60-(Time.now-t)).round
+          total = (Time.now-t).round
+          puts "total: #{total}s"
+          secs = 60-total
           secs = 0 if secs < 0
           puts "Sleeping #{secs}s..."
+          t = Time.now
           sleep(secs)
         rescue Interrupt=>e # Ctrl-C
           puts " again to exit, anything else to loop (was #{Time.now-t})"

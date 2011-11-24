@@ -28,7 +28,7 @@ module Weewar
 
     # No need to call this yourself.  Hexes are parsed and built
     # by the Map class.
-    def initialize( game, type, x, y )
+    def initialize(game, type, x, y)
       @game, @type, @x, @y = game, type, x, y
     end
 
@@ -72,7 +72,7 @@ module Weewar
     end
 
     def to_s
-      "#{@type} @ (#{@x},#{@y})"
+      "#{@type}[#{@x},#{@y}] with "+ (@unit.nil? ? 'no unit' : @unit.type.to_s)
     end
 
     def hex
@@ -115,5 +115,17 @@ module Weewar
       @faction != @game.my_faction
     end
 
+    def surrounded?(n)
+      nb = @game.map.hex_neighbours(self).inject(0) { |sum, h|
+        sum += @game.enemy_units.include?(h.unit)? 1 : 0
+        }
+      return true if nb >= n
+    end
+
+    def neighbours
+      @game.map.hex_neighbours(self)
+    end
+
   end
 end
+

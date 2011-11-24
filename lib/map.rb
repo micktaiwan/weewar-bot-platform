@@ -20,8 +20,9 @@ module Weewar
       'Swamp' => :swamp,
       'Base' => :base,
       'Harbor' => :harbour,
-      'repairshop' => :repairshop,
+      'Repairshop' => :repairshop,
       'Airfield' => :airfield,
+=begin
       'red_city' => :red_base,
       'blue_city' => :blue_base,
       'purple_city' => :purple_base,
@@ -40,6 +41,7 @@ module Weewar
       'yellow_airfield' => :yellow_airfield,
       'green_airfield' => :green_airfield,
       'white_airfield' => :white_airfield,
+=end
     }
 
     # Creates a new Map instance, based on the given Game and map ID number.
@@ -87,19 +89,12 @@ module Weewar
     end
     alias xy hex
 
-    # conflict with XmlData[]
-    # A convenience method for obtaining the Hex for a given coordinate pair.
-    #   hex = my_map[3, 7]
-    #def [](*xy)
-    #  hex(xy[0], xy[1])
-    #end
-
     # The Hex at the given coordinates, with the coordinates given in row-column
     # order (y, x).
     #   the_hex = map.rc( 8, 2 )
-    def rc( y, x )
-      hex(x, y)
-    end
+    #def rc( y, x )
+    #  hex(x, y)
+    #end
 
     # An Array of the given Hex's neighbouring Hex es.
     # The Array will not contain any nil elements.

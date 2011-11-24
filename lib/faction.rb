@@ -58,7 +58,7 @@ module Weewar
     end
 
     def unit_points
-      units.inject(0) { |sum, i| sum += i.strength}
+      units.inject(0) { |sum, i| sum += i.defense_strength}
     end
   end
 end

@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + '/pathfinding'
+
 module Weewar
 
   # An instance of the Unit class corresponds to a single unit in a game.
@@ -14,159 +16,19 @@ module Weewar
     attr_reader :faction, :hex, :type
     attr_accessor :hp
 
-    SYMBOL_FOR_UNIT = {
-      'Trooper' => :linf,
-      'Heavy Trooper' => :hinf,
-      'Raider' => :raider,
-      'Assault Artillery' => :aart,
-      'Tank' => :tank,
-      'Heavy Tank' => :htank,
-      'Berserker' => :bers,
-      'Light Artillery' => :lart,
-      'Heavy Artillery' => :hart,
-      'DFA' => :dfa,
-      'Hovercraft' => :hover,
-      'Battleship' => :bship,
-      'Helicopter' => :heli,
-      'Submarine' => :sub,
-      'Destroyer' => :dest,
-      'Anti Aircraft' =>  :aa,
-      'Speedboat' => :sboat,
-      'Bomber' =>  :bomber,
-      'Jet' => :jet
-      }
-
-    TYPE_FOR_SYMBOL = {
-      :linf => 'Trooper',
-      :hinf => 'Heavy Trooper',
-      :raider => 'Raider',
-      :tank => 'Tank',
-      :htank => 'Heavy Tank',
-      :lart => 'Light Artillery',
-      :hart => 'Heavy Artillery',
-      :hover => 'Hovercraft',
-      'Assault Artillery' => :aart,
-      :bers => 'Berserker',
-      :dfa => 'DFA',
-      :bship=> 'Battleship',
-      :heli => 'Helicopter',
-      :sub => 'Submarine',
-      :dest =>'Destroyer',
-      :aa=>'Anti Aircraft',
-      :sboat=>'Speedboat',
-      :bomber=>'Bomber',
-      :jet=>'Jet'
-    }
-
-    UNIT_CLASSES = {
-      :linf => :soft,
-      :hinf => :soft,
-      :raider => :hard,
-      :aart => :hard,
-      :tank => :hard,
-      :htank => :hard,
-      :bers => :hard,
-      :lart => :hard,
-      :hart => :hard,
-      :dfa => :hard,
-      :capturing => :soft,
-      :hover => :amphibic,
-      :bship => :boat,
-      :sboat => :speedboat,
-      :dest => :boat,
-      :sub => :sub,
-      :jet => :jet,
-      :heli => :air,
-      :bomber => :air,
-      :aa => :hard
-    }
-
-    # <Pistos> These need to be checked, I was just going by memory
-    UNIT_COSTS = {
-      :linf => 75,
-      :hinf => 150,
-      :raider => 200,
-      :tank => 300,
-      :hover => 300,
-      :htank => 600,
-      :lart => 200,
-      :aart => 450,
-      :hart => 600,
-      :dfa => 1200,
-      :bers => 900,
-      :sboat => 200,
-      :dest => 1100,
-      :bship => 2000,
-      :sub => 1200,
-      :jet => 800,
-      :heli => 600,
-      :bomber => 900,
-      :aa => 300,
-    }
-
-    # <Pistos> These need to be checked, I was just going by memory
-    REPAIR_RATE = {
-      :linf => 1,
-      :hinf => 1,
-      :raider => 2,
-      :tank => 2,
-      :hover => 2,
-      :htank => 2,
-      :lart => 1,
-      :aart => 2,
-      :hart => 1,
-      :dfa => 1,
-      :bers => 1,
-      :sboat => 2,
-      :dest => 1,
-      :bship => 1,
-      :sub => 1,
-      :jet => 3,
-      :heli => 3,
-      :bomber => 3,
-      :aa => 1,
-    }
-
-    # TODO: should be taken from the specifications page
-    STRENGTH = {
-      :linf => 6,
-      :hinf => 6,
-      :raider => 6,
-      :tank => 10,
-      :hover => 8,
-      :htank => 14,
-      :lart => 3,
-      :aart => 6,
-      :hart => 4,
-      :dfa => 4,
-      :bers => 14,
-      :sboat => 6,
-      :dest => 12,
-      :bship => 14,
-      :sub => 10,
-      :jet => 12,
-      :heli => 10,
-      :bomber => 10,
-      :aa => 4
-    }
-
-
-    CAPTURERS = [:linf, :hover, :hinf]
-
-    INFINITY = 99999999
+    require File.dirname(__FILE__) + '/unit_constants'
 
     # Units are created by the Map class.  No need to instantiate any on your own.
     def initialize(game, hex, faction, type, hp, finished, capturing = false)
       sym = SYMBOL_FOR_UNIT[type]
-      if sym.nil?
-        raise "Unknown type: '#{type}'"
-      end
+      raise "Unknown type: '#{type}'" if sym.nil?
+
       @game, @hex, @faction, @type, @hp, @finished, @capturing =
         game, hex, faction, sym, hp.to_i, finished, capturing
     end
 
     def to_s
-      "#{@faction}: #{@type}@(#{@hex.x},#{@hex.y})"
+      "#{@faction}.#{@type}@(#{@hex.x},#{@hex.y})"
     end
 
     # The Unit's current x coordinate (column).
@@ -211,6 +73,7 @@ module Weewar
     #   if new_unit == old_unit
     #   end
     def ==(other)
+      return false if !other
       @hex == other.hex and
       @faction == other.faction and
       @type == other.type
@@ -232,20 +95,59 @@ module Weewar
     #   enemies_in_range = my_unit.targets
     #   enemies_in_range_from_there = my_unit.targets possible_attack_position
     # TODO: replace that. do not call the server.
-    def targets(origin = @hex)
-      coords = XmlSimple.xml_in(
-        @game.send("<attackOptions x='#{origin.x}' y='#{origin.y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>")
-     )['coordinate']
-      if coords
-        coords.map { |c|
-          @game.map.hex(c['x'], c['y']).unit
-        }.compact
-      else
-        []
+    #def targets(origin = @hex)
+    #  coords = XmlSimple.xml_in(
+    #    @game.send("<attackOptions x='#{origin.x}' y='#{origin.y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>")
+    # )['coordinate']
+    #  if coords
+    #    coords.map { |c|
+    #      @game.map.hex(c['x'], c['y']).unit
+    #    }.compact
+    #  else
+    #    []
+    #  end
+    #end
+    #alias attack_options targets
+    #alias attackOptions targets
+
+    def my_targets(origin = @hex)
+      # get all the hex we can attach in our range
+      hexes, cost = attack_hexes
+      range_min, range_max = attack_range
+      if range_min > 0
+        hexes = hexes.select { |h| cost[h] >= range_min }
       end
+      hexes = hexes.select { |h| !h.unit.nil? and !h.unit.allied_with?(self) and attack_strength(h.unit.unit_class) > 0 }
+      puts "     #{self} with range [#{range_min},#{range_max}] can attack #{hexes.join(', ')}"
+      hexes
     end
-    alias attack_options targets
-    alias attackOptions targets
+
+    # TODO: same algorithm than pathfinding, except range and entrance cost are different
+    def attack_hexes(from=nil, cc=0, done=nil, cost=nil)
+      # starting hex
+      from ||= self.hex
+      raise "no hex ?" if !from
+      # path cost from self. algorith stops when current_cost > unit attack range
+      current_cost = cc
+      cost ||= Hash.new
+      # every hex done
+      done ||= []
+      # take neighbourgs hex, check the path cost, add them to possibles hexes, recurse
+      new_h = Array.new
+      range_min, range_max = attack_range
+      from.neighbours.each { |h|
+        ec = 1 # entrance cost is 1 for all type of terrain
+        next if h == self.hex or done.include?(h) or current_cost+ec > range_max # not already calculated # not too far
+        done << h
+        new_h << h
+        cost[h] = current_cost+ec
+        }
+      # recurse
+      new_h.each { |h|
+        done, cost = attack_hexes(h, current_cost+1, done, cost)
+        }
+      [done, cost]
+    end
 
     # Whether or not the Unit can attack the given target.
     # Returns true iff the Unit can still take action in the current round,
@@ -254,29 +156,15 @@ module Weewar
     #     my_unit.attack enemy_unit
     #   end
     def can_attack?(target)
-      not @finished and targets.include?(target)
+      not @finished and my_targets.include?(target)
     end
-
-    # An Array of the Hex es which the given Unit can move to in the current turn.
-    #   possible_moves = my_unit.destinations
-    # TODO: replace that. do not call the server.
-    def destinations
-      xml = XmlSimple.xml_in(@game.send("<movementOptions x='#{x}' y='#{y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>"))
-      coords = xml['coordinate']
-      if !coords
-        raise "Error: " + xml
-      end
-      coords.map { |c| @game.map.hex(c['x'], c['y']) }
-    end
-    alias movement_options destinations
-    alias movementOptions destinations
 
     # Whether or not the Unit can reach the given Hex in the current turn.
     #   if my_unit.can_reach? the_hex
     #     my_unit.move_to the_hex
     #   end
     def can_reach?(hex)
-      destinations.include? hex
+      my_destinations.include? hex
     end
 
     # An Array of the Unit s of the Game which are on the same side as this Unit.
@@ -293,101 +181,6 @@ module Weewar
       @faction == unit.faction
     end
 
-    #-- ----------------------------------------------
-    # Travel
-    #++
-
-    # The cost in movement points for the unit to enter the given Hex.  This
-    # is an internal method used for travel-related calculations; you should not
-    # normally need to use this yourself.
-    def entrance_cost(hex)
-      raise "hex is nil" if hex.nil?
-      raise "hex.type is nil" if hex.nil?
-
-      specs_for_type = Hex.terrain_specs[hex.type]
-      if specs_for_type.nil?
-        puts "**  No spec for type '#{hex.type}' hex: #{hex}"
-        exit
-        return 4
-      end
-      tag(specs_for_type[:movement][unit_class]) { |rv|
-        raise "no movement spec for #{unit_class}" if !rv
-        }
-    end
-
-    # The cost in movement points for the unit to travel along the given path.
-    # The path given should be an Array of Hexes.  This
-    # is an internal method used for travel-related calculations; you should not
-    # normally need to use this yourself.
-    def path_cost(path)
-      path.inject(0) { |sum,hex|
-        sum + entrance_cost(hex)
-      }
-    end
-
-    # The cost in movement points for this unit to travel to the given
-    # destination.
-    def travel_cost(dest)
-      sp = shortest_path(dest)
-      path_cost(sp)
-    end
-
-    # The shortest path (as an Array of Hexes) from the
-    # Unit's current location to the given destination.
-    #
-    # If the optional exclusion array is provided, the path will not
-    # pass through any Hex in the exclusion array.
-    #
-    #   best_path = my_trooper.shortest_path(enemy_base)
-    def shortest_path(dest, exclusions = [])
-      exclusions ||= []
-      previous = shortest_paths(exclusions)
-      s = []
-      u = dest.hex
-      while previous[u]
-        s.unshift u
-        u = previous[u]
-      end
-      s
-    end
-
-    # Calculate all shortest paths from the Unit's current Hex to every other
-    # Hex, as per Dijkstra's algorithm
-    # (http://en.wikipedia.org/wiki/Dijkstra's_algorithm).
-    # Most AIs will only need to make use of the shortest_path method instead.
-    def shortest_paths(exclusions = [])
-      # Initialization
-      start = Time.now
-      exclusions ||= []
-      source    = hex
-      dist      = Hash.new
-      previous  = Hash.new
-      q         = []
-      @game.map.each do |h|
-        next if exclusions.include? h
-        dist[h] = INFINITY
-        q << h
-      end
-      dist[source] = 0
-
-      # Work
-      while not q.empty?
-        u = q.inject { |best,h| dist[h] < dist[best] ? h : best }
-        q.delete u
-        @game.map.hex_neighbours(u).each do |h|
-          next if exclusions.include? h
-          alt = dist[u] + entrance_cost(h)
-          if alt < dist[h]
-            dist[h]     = alt
-            previous[h] = u
-          end
-        end
-      end
-
-      puts "     #{previous.size} paths, time: #{Time.now-start}"
-      # Results
-      previous
-    end
 
     #-- --------------------------------------------------
     # Actions
@@ -410,7 +203,10 @@ module Weewar
         else
           message = "RECEIVED:\n#{response}"
         end
-        raise "**  Failed to execute:\n#{command}\n#{message}"
+        # FIXME: could happen if a :bship moved, did not attack. It's not finished but can not move anymore.
+        str = "**  Failed to execute:\n#{command}\n#{message}"
+        puts str
+        Utils.log_debug str
       end
       response
     end
@@ -453,18 +249,21 @@ module Weewar
       raise "**  destination is nil" if !destination
       command = ""
       options[:exclusions] ||= []
-      puts "    destination is #{destination}, #{options[:exclusions].size} exclusions"
+      puts "     destination is #{destination}, #{options[:exclusions].size} exclusions"
 
+      done = false
       new_hex = @hex
 
       if destination != @hex
         # Travel
 
         path = shortest_path(destination, options[:exclusions])
+        puts "      path: #{path.join(', ')}"
         if !path or path.empty?
           $stderr.puts "*   No path from #{self} to #{destination}"
         else
-          dests = destinations
+          dests = my_destinations
+          puts "      dests: #{dests.size}: #{dests.join(', ')}"
           new_dest = path.pop
           while new_dest and not dests.include?(new_dest)
             new_dest = path.pop
@@ -473,7 +272,6 @@ module Weewar
 
         if new_dest.nil?
           $stderr.puts "*   Can't move #{self} to #{destination}"
-          return false
         else
           o = new_dest.unit
           if o and allied_with?(o)
@@ -485,6 +283,7 @@ module Weewar
             y = new_dest.y
             new_hex = new_dest
             command << "<move x='#{x}' y='#{y}'/>"
+            done = true
           end
         end
       end
@@ -492,7 +291,7 @@ module Weewar
       target = nil
       also_attack = options[:also_attack]
       if also_attack
-        enemies = targets(new_hex)
+        enemies = my_targets(new_hex)
         if not enemies.empty?
           case also_attack
           when Array
@@ -503,7 +302,9 @@ module Weewar
           target = preferred.sort_by{|u| u.hp}.first
 
           if target
+            $stderr.puts "*   Attack: #{self} => #{destination}"
             command << "<attack x='#{target.x}' y='#{target.y}'/>"
+            done = true
           end
         end
       end
@@ -516,11 +317,12 @@ module Weewar
         )
         puts "    capture: #{self} => #{new_hex}"
         command << "<capture/>"
+        done = true
       end
 
       if not command.empty?
         result = send(command)
-        puts "    Moved #{self} to #{new_hex}"
+        puts "     moved #{self} to #{new_hex}"
         @hex.unit = nil
         new_hex.unit = self
         @hex = new_hex
@@ -531,7 +333,7 @@ module Weewar
         end
 
         # Success
-        true
+        return done
       end
     end
     alias move move_to
@@ -599,13 +401,92 @@ module Weewar
       @hp += REPAIR_RATE[@type]
     end
 
-    def strength
-      STRENGTH[@type]
+    def defense_strength
+      raise "#{@type} has no defense strength" if !DEFENSE_STRENGTH[@type]
+      DEFENSE_STRENGTH[@type]
     end
+
+    def nb_moves
+      raise "#{@type} has no mobility" if !MOBILITY[@type]
+      MOBILITY[@type].size
+    end
+
+    def mobility(time)
+      raise "mobility error. unit #{self} can move #{nb_move} time(s) but call for #{time} time(s)" if time > nb_moves or time < 1
+      MOBILITY[@type][time-1]
+    end
+    alias speed mobility
 
     def cost
       UNIT_COSTS[@type]
     end
+
+    def attack_strength(kind)
+      raise "#{@type} has no attack strength at all" if !ATTACK_STRENGTH[@type]
+      raise "#{@type} has no attack strength for #{kind}" if !ATTACK_STRENGTH[@type][kind]
+      ATTACK_STRENGTH[@type][kind]
+    end
+
+    def attack_range
+      raise "#{@type} has no attack range" if !ATTACK_RANGE[@type]
+      ATTACK_RANGE[@type]
+    end
+
+    def surrounded?(nb)
+      self.hex.surrounded?(nb)
+    end
+
+=begin
+    How battles are calculated
+
+    If a unit attacks another unit the outcome is determined by the following:
+    The number of sub units, ranging from 1 - 10.
+    The individual attack (A) and defense (D) strength of both units involved.
+    The terrain each unit is sitting on during the attack (Ta and Td).
+    Gang up bonus
+
+    If a unit is attacked multiple times during the same turn attackers receive an additional bonus (B) as follows:
+    + 1 for each previous attack from a distance (e.g. by an artillery).
+    + 1 for each previous attack from a hex adjacent to the attacker and the defender.
+    + 3 for each previous attack from a hex on the opposite side of the defender.
+    + 2 for each previous attack from any other hex adjacent to the defender.
+    The math
+
+    p = 0.05 * (((A + Ta) - (D + Td))+B) + 0.5
+    if p < 0 set p to 0
+    if p > 1 set p to 1
+    For each sub unit of the attacker six random numbers (r) between 0 and 1 are generated. For each r < p a hit is counted. The total number of hits divided by 6 is the number of sub units the opponent loses during the attack.
+    Attacker and defender then switch roles and the process starts over. Please note: Losses will only be removed when the battle is over. They will not affect the calculations of the current attack.
+=end
+
+    def battle_outcome(enemy)
+      win_probability(enemy) - enemy.win_probability(self)
+    end
+
+    def win_probability(enemy)
+      tag(0.05 * (((attack_strength(enemy.unit_class) + attack_effect) - (enemy.defense_strength + enemy.defense_effect))+attack_bonus) + 0.5) { |p|
+        p = 0 if p < 0
+        p = 1 if p > 1
+        }
+    end
+
+    def attack_effect
+      raise "no terrain_specs for #{@hex.type}" if !Hex.terrain_specs[@hex.type]
+      raise "no attack specs for #{unit_class}" if !Hex.terrain_specs[@hex.type][:attack][unit_class]
+      Hex.terrain_specs[@hex.type][:attack][unit_class]
+    end
+
+    def defense_effect
+      raise "no terrain_specs for #{@hex.type}" if !Hex.terrain_specs[@hex.type]
+      raise "no defense specs for #{unit_class}" if !Hex.terrain_specs[@hex.type][:defense][unit_class]
+      Hex.terrain_specs[@hex.type][:defense][unit_class]
+    end
+
+    # TODO
+    def attack_bonus
+      0
+    end
+
   end
 end
 

@@ -1,0 +1,7 @@
+lib/maps/*.xml
+accounts.txt
+doc/
+log.txt
+test.rb
+.yardoc/
+
