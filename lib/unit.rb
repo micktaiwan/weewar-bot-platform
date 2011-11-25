@@ -339,16 +339,19 @@ module Weewar
 
       if not command.empty?
         response = send(command)
-        process_response(response)
+        if(process_response(response))
+          #puts "     moved #{self} to #{new_hex}"
+          @hex.unit = nil
+          new_hex.unit = self
+          @hex = new_hex
 
-        #puts "     moved #{self} to #{new_hex}"
-        @hex.unit = nil
-        new_hex.unit = self
-        @hex = new_hex
-
-        if target
-          #<attack target='[3,4]' damageReceived='2' damageInflicted='7' remainingQuantity='8' />
-          @game.last_attacked = target
+          if target
+            #<attack target='[3,4]' damageReceived='2' damageInflicted='7' remainingQuantity='8' />
+            @game.last_attacked = target
+          end
+        else
+          puts "**   an error occurred, return false from move_to"
+          return false
         end
       end
       return (moved or attacked or captured)
@@ -362,11 +365,13 @@ module Weewar
     # This is an internal method used to update the Unit attributes after a
     # command is sent to the weewar server.  You should not call this yourself.
     def process_response(xml_text)
-      xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })
+      xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false, 'KeepRoot' => true  })
       #Utils.log_debug("process_attack xml: "+xml.inspect)
       #Utils.log_debug("process_attack xml_text: "+xml_text.inspect)
       raise "process_result has no xml. xml=#{xml_text}" if !xml
-      raise xml['error'] if xml['error']
+      return false if xml['error']
+
+      xml = xml['ok']
 
       # attack
       if xml['attack'] and xml['attack']['target'] =~ /\[(\d+),(\d+)\]/
@@ -387,7 +392,7 @@ module Weewar
       else
         puts "     no attack in response"
       end
-
+      true
     end
 
     # Commands this Unit to attack another Unit.  This Unit will not move
@@ -555,7 +560,8 @@ module Weewar
     end
 
     # TODO: if target is out of moving range, find a safe place
-    # TODO: find a safer place anyway (intersection with a best place). If does not exists, well return best place to attack
+    # TODO: find a safer place anyway (intersection with a best place to attack and a safe place).
+    # If does not exists, well return best place to attack
     def best_place_to_attack(target)
       return @hex if dfa_has_target_in_range(target)
       dests = my_destinations
@@ -565,6 +571,8 @@ module Weewar
         d = dist_between(de,target)
         next if d > range_max
         next if d < range_min
+        puts "      sp used"
+        next if !shortest_path(de)
         distances[de] = d
         }
       return target if distances.empty?

@@ -119,7 +119,7 @@ module Weewar
         x = openset.sort_by{ |x| f_score[x]}.first # the node in openset having the lowest f_score[] value
         #return reconstruct_path(came_from, goal) if x == goal
         if x == goal.hex
-          puts "      path time: #{Time.now-time}"
+          #puts "      path time: #{Time.now-time}"
           return came_from
         end
 
@@ -147,7 +147,7 @@ module Weewar
           end
         end
       end
-      puts "time: #{Time.now-time}. no path from #{self} to #{goal}"
+      puts "!    time: #{Time.now-time}. no path from #{self} to #{goal}"
       nil
     end
 

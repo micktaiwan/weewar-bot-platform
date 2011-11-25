@@ -37,7 +37,7 @@ module Weewar
         end
 
         all_others = (@game.my_units + enemies) - [unit]
-        puts "    Moving #{unit}..."
+        puts "\n    Moving #{unit}..."
         move_options = {}
 
         # debugging
@@ -175,7 +175,7 @@ module Weewar
       # and a more intelligent system is needed anyway. Horus will do it :)
       @builders_built = 0
       alt = 1#rand(100)
-      @game.my_bases.sort_by{ |b| rand(1000)}.each do |base|
+      @game.my_bases.sort_by{ |b| -b.hex.surrounded_nb(enemies)}.each do |base|
         next if base.occupied?
 
         #if free bases and no builders, build them
@@ -247,7 +247,7 @@ module Weewar
 
         # TODO: find a better decision to build or not
         if (nb_units <= nb_enemies and (my.credits > 1.5*Unit::UNIT_COSTS[unit])) or
-           (nb_units <= nb_enemies+2 and (my.credits > 5*Unit::UNIT_COSTS[unit]))
+           (nb_units <= nb_enemies+2 and (my.credits > 3*Unit::UNIT_COSTS[unit]))
           build_unit(base, unit)
           break
         end

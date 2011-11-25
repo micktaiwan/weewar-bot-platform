@@ -123,15 +123,18 @@ module Weewar
       @faction != @game.my_faction and [:base, :harbour, :airfield].include?( @type )
     end
 
-    def surrounded_by?(n, units=nil)
+    def surrounded_nb(units=nil)
       if !units
         factions ||= @game.other_factions
         units = @game.all_units(factions)
       end
-      nb = @game.map.hex_neighbours(self).inject(0) { |sum, h|
+      return @game.map.hex_neighbours(self).inject(0) { |sum, h|
         sum += (units.include?(h.unit) or (hex.unit and hex.unit.speed(1) < h.entrance_cost(hex.unit)))? 1 : 0
         }
-      return true if nb >= n
+    end
+
+    def surrounded_by?(n, units=nil)
+      return true if surrounded_nb(units) >= n
       false
     end
 
