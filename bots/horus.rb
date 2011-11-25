@@ -14,9 +14,9 @@ module Weewar
     end
 
     def take_turn
-      puts "  Taking turn for game #{game.id}"
+      puts "  Taking turn for game #{@game.name}"
       send_commands(run_goals(sort_goals))
-      puts "  Ending turn for game #{game.id}"
+      puts "  Ending turn for game #{@game.name}"
       #@game.finish_turn
     end
 
@@ -25,11 +25,9 @@ module Weewar
     end
 
     def run_goals(goals)
-      @commands = []
-      goals.each { |g|
-        @commands << @plan.run(g)
-        }
-      @commands
+      tag([]) do |commands|
+        goals.each { |g| commands << @plan.run(g) }
+      end
     end
 
     def send_commands(commands)

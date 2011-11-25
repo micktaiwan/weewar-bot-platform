@@ -20,8 +20,14 @@ module Weewar
 
     # Units are created by the Map class.  No need to instantiate any on your own.
     def initialize(game, hex, faction, type, hp, finished, capturing = false)
-      sym = SYMBOL_FOR_UNIT[type]
-      raise "Unknown type: '#{type}'" if sym.nil?
+      # if type is a String it means we have passed something like 'Troopers'
+      # else we pass something like :linf
+      if type.class.name == "String"
+        sym = SYMBOL_FOR_UNIT[type]
+        raise "Unknown type: '#{type}'" if sym.nil?
+      else
+        sym = type
+      end
 
       @game, @hex, @faction, @type, @hp, @finished, @capturing =
         game, hex, faction, sym, hp.to_i, finished, capturing
@@ -110,14 +116,24 @@ module Weewar
     #alias attack_options targets
     #alias attackOptions targets
 
+    # get all the hex we can attach in our range
     def my_targets(origin = @hex)
-      # get all the hex we can attach in our range
       hexes, cost = attack_hexes
       range_min, range_max = attack_range
-      if range_min > 0
-        hexes = hexes.select { |h| cost[h] >= range_min }
+      if range_min > 1
+        hexes = hexes.select { |h|
+          c = cost[h]
+          if c
+            #puts "ok, cost for #{h}=#{cost[h]}."
+            c >= range_min
+          else
+            puts "no cost for #{h}. cost=#{cost.nil?}"
+            false
+          end
+          }
       end
-      hexes = hexes.select { |h| !h.unit.nil? and !h.unit.allied_with?(self) and attack_strength(h.unit.unit_class) > 0 }
+      hexes = hexes.select { |h| !h.unit.nil? and !h.unit.allied_with?(self) and
+         attack_strength(h.unit.unit_class) > 0}.map{ |h| h.unit}
       puts "     #{self} with range [#{range_min},#{range_max}] can attack #{hexes.join(', ')}"
       hexes
     end
@@ -131,14 +147,14 @@ module Weewar
       current_cost = cc
       cost ||= Hash.new
       # every hex done
-      done ||= []
+      done ||= [self.hex]
       # take neighbourgs hex, check the path cost, add them to possibles hexes, recurse
       new_h = Array.new
       range_min, range_max = attack_range
       from.neighbours.each { |h|
         ec = 1 # entrance cost is 1 for all type of terrain
-        next if h == self.hex or done.include?(h) or current_cost+ec > range_max # not already calculated # not too far
-        done << h
+        next if done.include?(h) or current_cost+ec > range_max # not already calculated and not too far
+        done  << h
         new_h << h
         cost[h] = current_cost+ec
         }
@@ -247,23 +263,24 @@ module Weewar
     #  )
     def move_to(destination, options = {})
       raise "**  destination is nil" if !destination
+      raise "**  options is not a Hash" if options.class.name != "Hash"
       command = ""
       options[:exclusions] ||= []
-      puts "     destination is #{destination}, #{options[:exclusions].size} exclusions"
+      #puts "     destination is #{destination}, #{options[:exclusions].size} exclusions"
 
       done = false
       new_hex = @hex
 
-      if destination != @hex
+      if destination != @hex #and !dfa_has_target_in_range(destination)
         # Travel
 
         path = shortest_path(destination, options[:exclusions])
-        puts "      path: #{path.join(', ')}"
+        #puts "      path: #{path.join(', ')}"
         if !path or path.empty?
           $stderr.puts "*   No path from #{self} to #{destination}"
         else
           dests = my_destinations
-          puts "      dests: #{dests.size}: #{dests.join(', ')}"
+          #puts "      dests: #{dests.size}: #{dests.join(', ')}"
           new_dest = path.pop
           while new_dest and not dests.include?(new_dest)
             new_dest = path.pop
@@ -276,6 +293,7 @@ module Weewar
           o = new_dest.unit
           if o and allied_with?(o)
             # Can't move through allied units
+            puts "*** should never be here as my_destinations sould check for allies"
             options[:exclusions] << new_dest
             return move_to(destination, options)
           else
@@ -290,23 +308,33 @@ module Weewar
 
       target = nil
       also_attack = options[:also_attack]
-      if also_attack
-        enemies = my_targets(new_hex)
-        if not enemies.empty?
+      if also_attack and (!done or ![:dfa, :hart, :lart].include?(@type)) # can't attack after move
+        targets = my_targets(new_hex)
+        if targets.empty?
+          puts "     no enemy to attack"
+        else
+          #puts "     targets: #{targets}"
           case also_attack
           when Array
-            preferred = also_attack & enemies
+            preferred = also_attack & targets
           else
-            preferred = [also_attack] & enemies
+            preferred = [also_attack] & targets
           end
+          #puts "     also_attack: #{also_attack}"
+          #puts "     preferred: #{preferred}"
           target = preferred.sort_by{|u| u.hp}.first
 
           if target
-            $stderr.puts "*   Attack: #{self} => #{destination}"
+            puts "*    Attacking #{self} => #{target}"
+            puts "!!!  from a dfa!" if [:dfa, :hart, :lart].include?(@type)
             command << "<attack x='#{target.x}' y='#{target.y}'/>"
             done = true
+          else
+            puts "     no target"
           end
         end
+      else
+        puts "     also_attack is nil or dfa can not attack"
       end
 
       if(
@@ -322,6 +350,7 @@ module Weewar
 
       if not command.empty?
         result = send(command)
+        # TODO: process move !!!
         puts "     moved #{self} to #{new_hex}"
         @hex.unit = nil
         new_hex.unit = self
@@ -337,6 +366,12 @@ module Weewar
       end
     end
     alias move move_to
+
+    def dfa_has_target_in_range(destination)
+      return false if ![:dfa, :hart, :lart].include?(@type)
+      my_targets.include?(destination)
+    end
+
 
     # This is an internal method used to update the Unit attributes after a
     # command is sent to the weewar server.  You should not call this yourself.
@@ -360,11 +395,15 @@ module Weewar
 
       damage_inflicted = xml['damageInflicted'].to_i
       enemy.hp -= damage_inflicted
+      if enemy.hp <= 0
+        @game.map.hex(x, y).unit = nil
+        puts "     erasing unit at [#{x},#{y}]"
+      end
 
       damage_received = xml['damageReceived'].to_i
       @hp = xml['remainingQuantity'].to_i
 
-      puts "    #{self} (-#{damage_received}: #{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}: #{enemy.hp})"
+      puts "    #{self} (-#{damage_received}=>#{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}=>#{enemy.hp})"
     end
 
     # Commands this Unit to attack another Unit.  This Unit will not move
@@ -385,9 +424,13 @@ module Weewar
       d = INFINITY
       nearest = nil
       units.each { |u|
-        nd = shortest_path(u, exclusions-[u]).size
-        if nd < d
-          d = nd
+        path = shortest_path(u, exclusions-[u])
+        #puts "     path for #{u}: #{path}"
+        next if !path
+        nd = path.size
+        #puts "     in progress nearest path size: #{nd} for #{u}"
+        if nd < d or (u.respond_to?(:hp) and (nd == d and u.hp < nearest.hp))
+          d       = nd
           nearest = u
         end
         }
@@ -432,8 +475,12 @@ module Weewar
       ATTACK_RANGE[@type]
     end
 
-    def surrounded?(nb)
-      self.hex.surrounded?(nb)
+    def max_range
+      ATTACK_RANGE[@type][1]
+    end
+
+    def surrounded_by?(nb, factions=nil)
+      self.hex.surrounded_by?(nb, factions)
     end
 
 =begin
@@ -460,13 +507,14 @@ module Weewar
 =end
 
     def battle_outcome(enemy)
-      win_probability(enemy) - enemy.win_probability(self)
+      (win_probability(enemy) - enemy.win_probability(self)) + (self.hp-enemy.hp).to_f/20
     end
 
     def win_probability(enemy)
       tag(0.05 * (((attack_strength(enemy.unit_class) + attack_effect) - (enemy.defense_strength + enemy.defense_effect))+attack_bonus) + 0.5) { |p|
         p = 0 if p < 0
         p = 1 if p > 1
+        p
         }
     end
 
@@ -478,7 +526,7 @@ module Weewar
 
     def defense_effect
       raise "no terrain_specs for #{@hex.type}" if !Hex.terrain_specs[@hex.type]
-      raise "no defense specs for #{unit_class}" if !Hex.terrain_specs[@hex.type][:defense][unit_class]
+      raise "no terrain defense specs for [#{@hex.type}][#{unit_class}] (defense for unit #{self})" if !Hex.terrain_specs[@hex.type][:defense][unit_class]
       Hex.terrain_specs[@hex.type][:defense][unit_class]
     end
 
@@ -487,6 +535,64 @@ module Weewar
       0
     end
 
-  end
-end
+    # find all safer places from targets
+    # inputs: targets
+    # output: destinations ordered by safeness
+    def find_safe_place(targets)
+      dests = my_destinations
+      distances = Hash.new
+      dests.each { |d|
+        dist = 0
+        targets.each { |t|
+          dist += 1.0/dist_between(d,t)
+          }
+        distances[d] = dist
+        }
+      dests.sort_by { |d| distances[d]}
+    end
+
+    def find_target_and_safe_place
+      t = my_targets
+      if t.size > 0
+        find_safe_place(t)
+      end
+    end
+
+    def select_near_target()
+      near_targets = my_targets
+      return near_targets.sort_by{ |t| t.hp}.first if near_targets.size > 0
+      nil
+    end
+
+    # TODO: if target is out of moving range, find a safe place
+    # TODO: find a safer place anyway (intersection with a best place). If does not exists, well return best place to attack
+    def best_place_to_attack(target)
+      return @hex if dfa_has_target_in_range(target)
+      dests = my_destinations
+      range_min, range_max = attack_range
+      distances = Hash.new
+      dests.each { |de|
+        d = dist_between(de,target)
+        next if d > range_max
+        next if d < range_min
+        distances[de] = d
+        }
+      return target if distances.empty?
+      distances.each { |k,v|
+        puts "     one best place found: #{k}=>#{v}"
+        }
+      distances.to_a.sort_by { |d| -d[1]}.first[0]
+    end
+
+    # return if moved or not
+    def insure_paths_to_enemy_bases_not_blocked
+      # assume the unit is not a capturer
+      raise "insure_paths_to_enemy_bases_not_blocked called for a CAPTURER" if CAPTURERS.include?(@type)
+      # TODO
+
+      false # not moved
+    end
+
+  end # class
+end # module
 

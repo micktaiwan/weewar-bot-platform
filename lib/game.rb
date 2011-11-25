@@ -194,6 +194,18 @@ module Weewar
       faction_for_player(@account.login)
     end
 
+    def all_units(fs) # factions is a method, so "fs" instead
+      if fs.class.name == "Array"
+        return fs.inject([]) { |units, f| units += f.units}
+      else
+        return fs.units
+      end
+    end
+
+    def other_factions
+      @factions - [my_faction]
+    end
+
     def my_units
       my_faction.units
     end

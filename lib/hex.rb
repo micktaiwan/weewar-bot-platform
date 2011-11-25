@@ -47,6 +47,7 @@ module Weewar
         if !type
           raise "Unknown terrain type: #{name}"
         else
+          #puts type
           h = trait[:terrain_specs][type] = {
             :attack => parse_numbers( tr.search( 'td' )[2].inner_text),
             :defense => parse_numbers( tr.search( 'td' )[3].inner_text),
@@ -54,13 +55,14 @@ module Weewar
           }
         end
       end
+      #p trait[:terrain_specs][:base][:defense]
       #exit
     end
 
     # An internal method used by initialize_specs.
     def Hex.parse_numbers( text )
       retval = Hash.new
-      text.scan( /(\w+):(\d+)/ ) do |data|
+      text.scan( /(\w+):([-]{0,1}\d+)/ ) do |data|
         retval[data[0].to_sym] = data[1].to_i
       end
       retval
@@ -93,8 +95,15 @@ module Weewar
     #   base.build :linf
     # TODO: do not send command directly
     def build( unit_type )
+      raise "faction is nil" if self.faction == nil
       @game.send "<build x='#{@x}' y='#{@y}' type='#{Unit::TYPE_FOR_SYMBOL[unit_type]}'/>"
-      # TODO: refresh credits
+
+      # TODO: I set finished=true, but if I don't refresh the game at next round
+      # it could still be at true. I don't know the rules of bulding a unit
+      unit = Unit.new(@game, self, self.faction, unit_type, 10, true, false)
+      @game.units << unit
+      self.faction.credits -= Unit::UNIT_COSTS[unit_type]
+
       # @game.refresh # Mick
     end
 
@@ -111,15 +120,27 @@ module Weewar
     #     my_trooper.move_to hex
     #   end
     def capturable?
-      [:base, :harbour, :airfield].include?( @type ) and
-      @faction != @game.my_faction
+      @faction != @game.my_faction and [:base, :harbour, :airfield].include?( @type )
     end
 
-    def surrounded?(n)
+    def surrounded_by?(n, factions=nil)
+      factions ||= @game.other_factions
+      units = @game.all_units(factions)
       nb = @game.map.hex_neighbours(self).inject(0) { |sum, h|
-        sum += @game.enemy_units.include?(h.unit)? 1 : 0
+        sum += (units.include?(h.unit) or (hex.unit and hex.unit.speed(1) < h.entrance_cost(hex.unit)))? 1 : 0
         }
       return true if nb >= n
+      false
+    end
+
+    def entrance_cost(unit)
+      raise "type is nil" if @type.nil?
+
+      specs_for_type = Hex.terrain_specs[@type]
+      raise "**  No spec for type '#{hex.type}' hex: #{hex}" if specs_for_type.nil?
+      tag(specs_for_type[:movement][unit.unit_class]) { |rv|
+        raise "no movement spec for #{unit.unit_class}" if !rv
+        }
     end
 
     def neighbours

@@ -7,7 +7,8 @@ module Weewar
   # or not a faction is currently playing in a Game, or whether it can
   # afford to buy a unit type.
   class Faction
-    attr_reader :credits, :player_id, :player_name, :state
+    attr_reader :player_id, :player_name, :state
+    attr_accessor :credits
 
     # You should not need to instantiate any Faction on your own;
     # they are created for you by Game instances.
