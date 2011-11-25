@@ -166,7 +166,7 @@ describe "Pathfinding" do
   it "random" do
     @map.random
 
-    path = @map.get(0,0).shortest_path(@map.get(19,19))
+    path = @map.get(0,0).shortest_path(@map.get(19,19), [@map.get(3,3)])
     if !path
       puts "no path"
     else

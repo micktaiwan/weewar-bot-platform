@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + '/../lib/utils'
+
 module Weewar
 
   class Unit
@@ -88,24 +90,21 @@ module Weewar
     #
     #   best_path = my_trooper.shortest_path(enemy_base)
     def shortest_path(dest, exclusions = [])
-      #puts "shortest_path"
-      return my_shortest_path(dest, exclusions)
-
       exclusions ||= []
-      previous = shortest_paths(exclusions)
+      previous = my_shortest_path(dest, exclusions) # shortest_paths(exclusions)
+      return nil if !previous
       u = dest.hex
       s = []
       while previous[u]
         s.unshift u
         u = previous[u]
       end
-      return nil if s.empty?
       s
     end
 
-    def my_shortest_path(goal, closedset = [])
+    def my_shortest_path(goal, exclusions = [])
       time = Time.now
-      closedset ||= Array.new # The set of nodes already evaluated.
+      closedset = exclusions.map{ |x| x} # The set of nodes already evaluated. Perform a copy of the array
       openset   = [@hex]    # The set of tentative nodes to be evaluated, initially containing the start node
       came_from = Hash.new # The map of navigated nodes.
       g_score   = Hash.new
@@ -113,16 +112,15 @@ module Weewar
       f_score   = Hash.new
 
       g_score[@hex] = 0     # Cost from start along best known path.
-      h_score[@hex] = heuristic_cost_estimate(@hex, goal)
+      h_score[@hex] = heuristic_cost_estimate(@hex, goal.hex)
       f_score[@hex] = g_score[@hex] + h_score[@hex]  # Estimated total cost from start to goal through y.
 
       while not openset.empty?
         x = openset.sort_by{ |x| f_score[x]}.first # the node in openset having the lowest f_score[] value
         #return reconstruct_path(came_from, goal) if x == goal
-        if x == goal
-          path =  reconstruct_path(came_from, goal)
-          puts "time: #{Time.now-time}. path size: #{path.size}"
-          return path
+        if x == goal.hex
+          puts "      path time: #{Time.now-time}"
+          return came_from
         end
 
         openset.delete(x)
@@ -149,7 +147,7 @@ module Weewar
           end
         end
       end
-      puts "time: #{Time.now-time}. no path"
+      puts "time: #{Time.now-time}. no path from #{self} to #{goal}"
       nil
     end
 
@@ -169,14 +167,14 @@ module Weewar
       return :plus
     end
 
-    def reconstruct_path(came_from, current_node)
-      if came_from[current_node]
-        p = reconstruct_path(came_from, came_from[current_node])
-        return (p + [current_node])
-      else
-        return [current_node]
-      end
-    end
+    #def reconstruct_path(came_from, current_node)
+    #  if came_from[current_node]
+    #    p = reconstruct_path(came_from, came_from[current_node])
+    #    return (p + [current_node])
+    #  else
+    #    return [current_node]
+    #  end
+    #end
 
     def heuristic_cost_estimate(x,y)
       dist_between(x,y) + entrance_cost(x)

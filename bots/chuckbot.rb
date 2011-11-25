@@ -17,16 +17,21 @@ module Weewar
       i = me = my = @game.my_faction
       puts "  Taking turn for game #{@game.name}. Credits: #{my.credits}. Board score: #{board_score}"
 
-      units = @game.my_units.find_all { |u| not u.finished? }
+      units         = @game.my_units.find_all { |u| not u.finished? }
       enemies       = @game.enemy_units
-      not_attacked  = @game.enemy_units
+      #puts "=== 1"
+      #enemies.each {|u|
+      #  puts "- ennemy: #{u}"
+      #  }
+
       attacked = []
       going_to_neutral_bases = []
+
       # Move units
       # TODO: make 2 loops on units that didn't move before doing something else
       units.sort_by{|u| [u.attack_range[0], -u.defense_strength, -u.hp, -u.speed(1)]}.each do |unit|
-        s = unit.surrounded_by?(6,me) # to gain speed, but no attack possible...
-        if s
+
+        if unit.surrounded_by?(6,@game.my_units) # to gain speed, but no attack possible...
           puts "    #{unit} is surrounded"
           next
         end
@@ -36,12 +41,17 @@ module Weewar
         move_options = {}
 
         # debugging
+=begin
+        puts "=== 2 / #{unit}"
+        enemies.each {|u|
+          puts "- ennemy: #{u}"
+          }
+=end
         enemies.find_all {|u| !u.respond_to?(:defense_strength)}.each { |u|
           puts "**  #{u} does not respond to 'defense_strength'"
           }
 
         #puts "    #{unit} destinations: #{unit.my_destinations.size}"
-
 
         # TODO not good, attack formula will not take the right terrain as we didn't move yet
         weakers     = enemies.find_all {|u| unit.battle_outcome(u) >= 0 }

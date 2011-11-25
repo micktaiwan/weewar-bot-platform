@@ -196,7 +196,7 @@ module Weewar
 
     def all_units(fs) # factions is a method, so "fs" instead
       if fs.class.name == "Array"
-        return fs.inject([]) { |units, f| units += f.units}
+        return fs.inject([]) { |us, f| us += f.units}
       else
         return fs.units
       end
@@ -215,6 +215,11 @@ module Weewar
     def enemy_units
       @units.find_all { |u| u.faction != my_faction }
     end
+
+    def my_capturers
+      my_units.find_all{ |u| Unit::CAPTURERS.include?(u)}
+    end
+
 
     # An Array of the base Hexes for this game.
     #   bases = game.bases

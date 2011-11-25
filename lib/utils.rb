@@ -10,6 +10,9 @@ class Object
     yield(value)
     value
   end
+  def deep_copy
+    Marshal.load( Marshal.dump(self) )
+  end
 end
 
 class String

@@ -120,18 +120,7 @@ module Weewar
     def my_targets(origin = @hex)
       hexes, cost = attack_hexes
       range_min, range_max = attack_range
-      if range_min > 1
-        hexes = hexes.select { |h|
-          c = cost[h]
-          if c
-            #puts "ok, cost for #{h}=#{cost[h]}."
-            c >= range_min
-          else
-            puts "no cost for #{h}. cost=#{cost.nil?}"
-            false
-          end
-          }
-      end
+      hexes = hexes.select { |h| cost[h] >= range_min } if range_min > 1
       hexes = hexes.select { |h| !h.unit.nil? and !h.unit.allied_with?(self) and
          attack_strength(h.unit.unit_class) > 0}.map{ |h| h.unit}
       puts "     #{self} with range [#{range_min},#{range_max}] can attack #{hexes.join(', ')}"
@@ -268,7 +257,9 @@ module Weewar
       options[:exclusions] ||= []
       #puts "     destination is #{destination}, #{options[:exclusions].size} exclusions"
 
-      done = false
+      moved     = false
+      attacked  = false
+      captured  = false
       new_hex = @hex
 
       if destination != @hex #and !dfa_has_target_in_range(destination)
@@ -301,14 +292,14 @@ module Weewar
             y = new_dest.y
             new_hex = new_dest
             command << "<move x='#{x}' y='#{y}'/>"
-            done = true
+            moved = true
           end
         end
       end
 
       target = nil
       also_attack = options[:also_attack]
-      if also_attack and (!done or ![:dfa, :hart, :lart].include?(@type)) # can't attack after move
+      if also_attack and (!moved or ![:dfa, :hart, :lart].include?(@type)) # can't attack after move
         targets = my_targets(new_hex)
         if targets.empty?
           puts "     no enemy to attack"
@@ -328,7 +319,7 @@ module Weewar
             puts "*    Attacking #{self} => #{target}"
             puts "!!!  from a dfa!" if [:dfa, :hart, :lart].include?(@type)
             command << "<attack x='#{target.x}' y='#{target.y}'/>"
-            done = true
+            attacked = true
           else
             puts "     no target"
           end
@@ -337,73 +328,66 @@ module Weewar
         puts "     also_attack is nil or dfa can not attack"
       end
 
-      if(
-        not options[:no_capture] and
-        can_capture? and
-        new_hex == destination and
-        new_hex.capturable?
-        )
+      if( not options[:no_capture] and
+          can_capture? and
+          new_hex == destination and
+          new_hex.capturable?)
         puts "    capture: #{self} => #{new_hex}"
         command << "<capture/>"
-        done = true
+        captured = true
       end
 
       if not command.empty?
-        result = send(command)
-        # TODO: process move !!!
-        puts "     moved #{self} to #{new_hex}"
+        response = send(command)
+        process_response(response)
+
+        #puts "     moved #{self} to #{new_hex}"
         @hex.unit = nil
         new_hex.unit = self
         @hex = new_hex
+
         if target
           #<attack target='[3,4]' damageReceived='2' damageInflicted='7' remainingQuantity='8' />
-          process_attack(result)
           @game.last_attacked = target
         end
-
-        # Success
-        return done
       end
+      return (moved or attacked or captured)
     end
-    alias move move_to
 
     def dfa_has_target_in_range(destination)
       return false if ![:dfa, :hart, :lart].include?(@type)
       my_targets.include?(destination)
     end
 
-
     # This is an internal method used to update the Unit attributes after a
     # command is sent to the weewar server.  You should not call this yourself.
-    def process_attack(xml_text)
-      puts "process_attack"
-      xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })['attack']
+    def process_response(xml_text)
+      xml = XmlSimple.xml_in(xml_text, { 'ForceArray' => false })
       #Utils.log_debug("process_attack xml: "+xml.inspect)
       #Utils.log_debug("process_attack xml_text: "+xml_text.inspect)
-      if !xml or !xml['target']
-        puts "process_attack has no xml or no target properties. xml=#{xml_text}"
-        return
-      end
-      if xml['target'] =~ /\[(\d+),(\d+)\]/
+      raise "process_result has no xml. xml=#{xml_text}" if !xml
+      raise xml['error'] if xml['error']
+
+      # attack
+      if xml['attack'] and xml['attack']['target'] =~ /\[(\d+),(\d+)\]/
         x, y = $1, $2
         enemy = @game.map.hex(x, y).unit
+        if enemy.nil?
+          raise "Server says enemy attacked was at (#{x},#{y}), but we have no record of an enemy there."
+        end
+        damage_inflicted = xml['damageInflicted'].to_i
+        enemy.hp -= damage_inflicted
+        if enemy.hp <= 0
+          @game.map.hex(x, y).unit = nil
+          puts "     erasing unit at [#{x},#{y}]"
+        end
+        damage_received = xml['damageReceived'].to_i
+        @hp = xml['remainingQuantity'].to_i
+        puts "    #{self} (-#{damage_received}=>#{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}=>#{enemy.hp})"
+      else
+        puts "     no attack in response"
       end
 
-      if enemy.nil?
-        raise "Server says enemy attacked was at (#{x},#{y}), but we have no record of an enemy there."
-      end
-
-      damage_inflicted = xml['damageInflicted'].to_i
-      enemy.hp -= damage_inflicted
-      if enemy.hp <= 0
-        @game.map.hex(x, y).unit = nil
-        puts "     erasing unit at [#{x},#{y}]"
-      end
-
-      damage_received = xml['damageReceived'].to_i
-      @hp = xml['remainingQuantity'].to_i
-
-      puts "    #{self} (-#{damage_received}=>#{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}=>#{enemy.hp})"
     end
 
     # Commands this Unit to attack another Unit.  This Unit will not move
@@ -414,27 +398,33 @@ module Weewar
       x = unit.x
       y = unit.y
 
-      result = send "<attack x='#{x}' y='#{y}'/>"
-      process_attack result
+      response = send "<attack x='#{x}' y='#{y}'/>"
+      process_response(response)
       @game.last_attacked = @game.map.hex(x, y).unit
       true
     end
 
-    def nearest(units, exclusions=[])
-      d = INFINITY
-      nearest = nil
+    def select_distance(units, operator, exclusions)
+      d   = nil
+      rv  = nil
       units.each { |u|
         path = shortest_path(u, exclusions-[u])
-        #puts "     path for #{u}: #{path}"
         next if !path
         nd = path.size
-        #puts "     in progress nearest path size: #{nd} for #{u}"
-        if nd < d or (u.respond_to?(:hp) and (nd == d and u.hp < nearest.hp))
+        if !d or nd.send(operator,d) or (u.respond_to?(:hp) and  (nd == d and u.hp.send(operator,rv.hp)))
           d       = nd
-          nearest = u
+          rv = u
         end
         }
-      nearest
+      rv
+    end
+
+    def nearest(units, exclusions=[])
+      select_distance(units, :<, exclusions)
+    end
+
+    def farest(units, exclusions=[])
+      select_distance(units, :>, exclusions)
     end
 
     # Commands the Unit to undergo repairs.
@@ -479,8 +469,8 @@ module Weewar
       ATTACK_RANGE[@type][1]
     end
 
-    def surrounded_by?(nb, factions=nil)
-      self.hex.surrounded_by?(nb, factions)
+    def surrounded_by?(nb, units=nil)
+      self.hex.surrounded_by?(nb, units)
     end
 
 =begin
@@ -587,10 +577,24 @@ module Weewar
     # return if moved or not
     def insure_paths_to_enemy_bases_not_blocked
       # assume the unit is not a capturer
+      return false
       raise "insure_paths_to_enemy_bases_not_blocked called for a CAPTURER" if CAPTURERS.include?(@type)
+      return false if surrounded_by?(6, @game.units)
       # TODO
+      # take the nearest capturer, calcul its path to nearest base
+      # if blocked, move away from base
+      b = nearest(@game.enemy_bases, [])  # no exclusions
+      n = nearest(@game.my_capturers, []) # no exclusions
+      path = n.shortest_path(b, [])
+      if path.include?(@hex)
+        puts "!    moving away from #{b} as #{n} could go to it"
+        return move_away_from(b)
+      end
+    end
 
-      false # not moved
+    def move_away_from(unit) # TODO: unit is not used
+      d = my_destinations
+      return move_to(farest(d, @game.units), {:exclusions=>@game.units})
     end
 
   end # class
