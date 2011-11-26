@@ -220,6 +220,9 @@ module Weewar
       my_units.find_all{ |u| Unit::CAPTURERS.include?(u)}
     end
 
+    def delete_unit(unit)
+      @units.delete(unit)
+    end
 
     # An Array of the base Hexes for this game.
     #   bases = game.bases

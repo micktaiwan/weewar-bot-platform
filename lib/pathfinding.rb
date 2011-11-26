@@ -5,46 +5,52 @@ module Weewar
   class Unit
     # An Array of the Hex es which the given Unit can move to in the current turn.
     #   possible_moves = my_unit.destinations
-    # TODO: replace that. do not call the server.
-    #def destinations
-    #  xml = XmlSimple.xml_in(@game.send("<movementOptions x='#{x}' y='#{y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>"))
-    #  coords = xml['coordinate']
-    #  if !coords
-    #    puts "no coords for #{self}. xml=#{xml}"
-    #    return []
-    #  end
-    #  coords.map { |c| @game.map.hex(c['x'], c['y']) }
-    #end
-    #alias movement_options destinations
-    #alias movementOptions destinations
+    def destinations
+      xml = XmlSimple.xml_in(@game.send("<movementOptions x='#{x}' y='#{y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>"))
+      coords = xml['coordinate']
+      if !coords
+        puts "no coords for #{self}. xml=#{xml}"
+        return []
+      end
+      coords.map { |c| @game.map.hex(c['x'], c['y']) }
+    end
 
     # version without calls to server
-    def my_destinations(from=nil, cc=0, possibles=nil)#, cost=nil)
-      # starting hex
-      from ||= self.hex
-      raise "no hex ?" if !from
-      # path cost from self. algorith stops when current_cost > unit movement capacity
-      current_cost = cc
-      # every possible destination in one move
-      possibles ||= []
-      # all costs to go to hexes
-      #cost ||= Hash.new
-      # take neighbourgs hex, check the path cost, add them to possibles hexes, recurse
-      new_h = Array.new
-      mob = mobility(1)
-      from.neighbours.each { |h|
-        ec = entrance_cost(h)
-        next if h.occupied? or h == self.hex or possibles.include?(h) or current_cost+ec > mob # not already calculated # not too far
-        possibles << h
-        new_h << h
-        #cost[h] = current_cost+ec
-        }
-      # recurse
-      new_h.each { |h|
-        possibles = my_destinations(h, current_cost+entrance_cost(h), possibles)#, cost)
-        }
-      possibles
+    def my_destinations_and_backchains(exclusions = [], from=nil)
+      closedset   = exclusions.map{ |x| x} # The set of nodes already evaluated. Perform a copy of the array
+      from      ||= @hex
+      openset     = [from]    # The set of tentative nodes to be evaluated, initially containing the start node
+      came_from   = Hash.new # The map of navigated nodes.
+      cost        = Hash.new
+      possibles   = Array.new
+      cost[from]  = 0     # Cost from start along best known path.
+      mob         = mobility(1)
+      while not openset.empty?
+        x = openset.sort_by{ |x| cost[x]}.first
+        openset.delete(x)
+        closedset.push(x)
+        for y in x.neighbours
+          next if closedset.include?(y)
+          ec = entrance_cost(y)
+          next if cost[x]+ec > mob
+          if not openset.include?(y)
+            openset.push(y)
+            came_from[y]  = x
+            cost[y]       = cost[x]+ec
+            possibles << y
+          end
+        end
+      end
+      [possibles, came_from]
     end
+
+    def my_destinations(exclusions = [], from=nil)
+      return destinations # FIXME: temporarily as I'm implementing Zone Of Control
+      # http://weewar.wikispaces.com/Zone+of+Control
+      my_destinations_and_backchains(exclusions, from)[0]
+    end
+
+
 
     #-- ----------------------------------------------
     # Travel
@@ -91,17 +97,21 @@ module Weewar
     #   best_path = my_trooper.shortest_path(enemy_base)
     def shortest_path(dest, exclusions = [])
       exclusions ||= []
-      previous = my_shortest_path(dest, exclusions) # shortest_paths(exclusions)
-      return nil if !previous
+      reconstruct_path(dest, my_shortest_path(dest, exclusions)) # shortest_paths(exclusions)
+    end
+
+    def reconstruct_path(dest, back_chain)
+      return nil if !back_chain
       u = dest.hex
       s = []
-      while previous[u]
+      while back_chain[u]
         s.unshift u
-        u = previous[u]
+        u = back_chain[u]
       end
       s
     end
 
+    # A* (see wikipedia for pseudo-code)
     def my_shortest_path(goal, exclusions = [])
       time = Time.now
       closedset = exclusions.map{ |x| x} # The set of nodes already evaluated. Perform a copy of the array
@@ -130,7 +140,7 @@ module Weewar
 
         for y in x.neighbours
           next if closedset.include?(y)
-          tentative_g_score = g_score[x] + dist_between(x,y)
+          tentative_g_score = g_score[x] + x.dist_between(y)
           if not openset.include?(y)
             openset.push(y)
             tentative_is_better = true
@@ -152,19 +162,8 @@ module Weewar
     end
 
     # Math distance (not path related)
-    def dist_between(a,b)
-      dx = b.x - a.x
-      dy = b.y - a.y
-      if (sign(dx) == sign(dy))
-        dist = [dx.abs, dy.abs].max
-      else
-        dist = dx.abs + dy.abs
-      end
-    end
-
-    def sign(a)
-      return :minus if a < 0
-      return :plus
+    def dist_between(b)
+      self.hex.dist_between(b.hex)
     end
 
     #def reconstruct_path(came_from, current_node)
@@ -177,56 +176,8 @@ module Weewar
     #end
 
     def heuristic_cost_estimate(x,y)
-      dist_between(x,y) + entrance_cost(x)
+      x.dist_between(y) + entrance_cost(x)
     end
-
-
-=begin
- function A*(start,goal)
-     closedset := the empty set    // The set of nodes already evaluated.
-     openset := {start}    // The set of tentative nodes to be evaluated, initially containing the start node
-     came_from := the empty map    // The map of navigated nodes.
-
-     g_score[start] := 0    // Cost from start along best known path.
-     h_score[start] := heuristic_cost_estimate(start, goal)
-     f_score[start] := g_score[start] + h_score[start]    // Estimated total cost from start to goal through y.
-
-     while openset is not empty
-         x := the node in openset having the lowest f_score[] value
-         if x = goal
-             return reconstruct_path(came_from, came_from[goal])
-
-         remove x from openset
-         add x to closedset
-         foreach y in neighbor_nodes(x)
-             if y in closedset
-                 continue
-             tentative_g_score := g_score[x] + dist_between(x,y)
-
-             if y not in openset
-                 add y to openset
-                 tentative_is_better := true
-             else if tentative_g_score < g_score[y]
-                 tentative_is_better := true
-             else
-                 tentative_is_better := false
-
-             if tentative_is_better = true
-                 came_from[y] := x
-                 g_score[y] := tentative_g_score
-                 h_score[y] := heuristic_cost_estimate(y, goal)
-                 f_score[y] := g_score[y] + h_score[y]
-
-     return failure
-
- function reconstruct_path(came_from, current_node)
-     if came_from[current_node] is set
-         p := reconstruct_path(came_from, came_from[current_node])
-         return (p + current_node)
-     else
-         return current_node
-=end
-
 
     # Calculate all shortest paths from the Unit's current Hex to every other
     # Hex, as per Dijkstra's algorithm

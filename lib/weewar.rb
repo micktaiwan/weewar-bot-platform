@@ -25,6 +25,7 @@ module Weewar
 
     def initialize
       puts "***************** LOCAL GAME****************" if $local_game
+      @unattended = true if ARGV[0]=="u"
       Utils.init
       # an account manage invitations (not begun game) and finished games
       init_accounts
@@ -61,14 +62,14 @@ module Weewar
           @bot_accounts.each { |a| a.process_hq_once }
           total = (Time.now-t).round
           puts "total: #{total}s"
-          secs = 60-total
+          secs = 80-total
           secs = 0 if secs < 0
           puts "Sleeping #{secs}s..."
           t = Time.now
           sleep(secs)
         rescue Interrupt=>e # Ctrl-C
           puts " again to exit, anything else to loop (was #{Time.now-t})"
-          i = gets.chomp
+          i = gets.chomp unless @unattended
           break if i == "exit"
         rescue Exception=>e
           puts "ERROR: #{e.message}"

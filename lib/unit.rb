@@ -122,7 +122,7 @@ module Weewar
       range_min, range_max = attack_range
       hexes = hexes.select { |h| cost[h] >= range_min } if range_min > 1
       hexes = hexes.select { |h| !h.unit.nil? and !h.unit.allied_with?(self) and
-         attack_strength(h.unit.unit_class) > 0}.map{ |h| h.unit}
+         battle_outcome(h.unit) > 0}.map{ |h| h.unit}
       puts "     #{self} with range [#{range_min},#{range_max}] can attack #{hexes.join(', ')}"
       hexes
     end
@@ -284,7 +284,7 @@ module Weewar
           o = new_dest.unit
           if o and allied_with?(o)
             # Can't move through allied units
-            puts "*** should never be here as my_destinations sould check for allies"
+            puts "***  should never be here as my_destinations sould check for allies"
             options[:exclusions] << new_dest
             return move_to(destination, options)
           else
@@ -380,14 +380,17 @@ module Weewar
         if enemy.nil?
           raise "Server says enemy attacked was at (#{x},#{y}), but we have no record of an enemy there."
         end
-        damage_inflicted = xml['damageInflicted'].to_i
+        damage_inflicted = xml['attack']['damageInflicted'].to_i
         enemy.hp -= damage_inflicted
+        raise "error reading response: #{xml}" if enemy.hp != xml['attack']['remainingQuantity'].to_i
         if enemy.hp <= 0
-          @game.map.hex(x, y).unit = nil
-          puts "     erasing unit at [#{x},#{y}]"
+          @game.delete_unit(enemy)
+          puts "     deleting unit at [#{x},#{y}]"
+          # Careful! Refresh your data !
         end
-        damage_received = xml['damageReceived'].to_i
-        @hp = xml['remainingQuantity'].to_i
+        damage_received = xml['attack']['damageReceived'].to_i
+        @hp -= damage_received #xml['attack']['remainingQuantity'].to_i
+        # TODO: remove myself if dead. What is the impact on caller loop ?
         puts "    #{self} (-#{damage_received}=>#{@hp}) ATTACKED #{enemy} (-#{damage_inflicted}=>#{enemy.hp})"
       else
         puts "     no attack in response"
@@ -410,6 +413,7 @@ module Weewar
     end
 
     def select_distance(units, operator, exclusions)
+      raise "units shall be an Array" if units.class.name != "Array"
       d   = nil
       rv  = nil
       units.each { |u|
@@ -502,7 +506,7 @@ module Weewar
 =end
 
     def battle_outcome(enemy)
-      (win_probability(enemy) - enemy.win_probability(self)) + (self.hp-enemy.hp).to_f/20
+      (win_probability(enemy) - enemy.win_probability(self))# + (self.hp-enemy.hp).to_f/20
     end
 
     def win_probability(enemy)
@@ -539,7 +543,7 @@ module Weewar
       dests.each { |d|
         dist = 0
         targets.each { |t|
-          dist += 1.0/dist_between(d,t)
+          dist += 1.0/d.dist_between(t)
           }
         distances[d] = dist
         }
@@ -563,12 +567,18 @@ module Weewar
     # TODO: find a safer place anyway (intersection with a best place to attack and a safe place).
     # If does not exists, well return best place to attack
     def best_place_to_attack(target)
+      # FIXME: my_destinations does not take into account the fact that
+      # there are surrounding enemies
+      # (the movement options are not the same in that case, but I don't know them)
+
+      # dfas-like can not attack after moving
       return @hex if dfa_has_target_in_range(target)
+
       dests = my_destinations
       range_min, range_max = attack_range
       distances = Hash.new
       dests.each { |de|
-        d = dist_between(de,target)
+        d = de.dist_between(target)
         next if d > range_max
         next if d < range_min
         puts "      sp used"
@@ -585,24 +595,31 @@ module Weewar
     # return if moved or not
     def insure_paths_to_enemy_bases_not_blocked
       # assume the unit is not a capturer
-      return false
       raise "insure_paths_to_enemy_bases_not_blocked called for a CAPTURER" if CAPTURERS.include?(@type)
       return false if surrounded_by?(6, @game.units)
-      # TODO
+      capturers = @game.my_capturers
+      return false if capturers.size == 0
+      return false if @game.enemy_bases.size == 0
       # take the nearest capturer, calcul its path to nearest base
       # if blocked, move away from base
+      n = nearest(capturers, []) # no exclusions
+      return false if dist_between(n) > n.speed(1)-2 # -2 to let space to go away
       b = nearest(@game.enemy_bases, [])  # no exclusions
-      n = nearest(@game.my_capturers, []) # no exclusions
       path = n.shortest_path(b, [])
       if path.include?(@hex)
         puts "!    moving away from #{b} as #{n} could go to it"
-        return move_away_from(b)
+        return move_away_from([b])
       end
+      false
     end
 
-    def move_away_from(unit) # TODO: unit is not used
+    def move_away_from(units)
       d = my_destinations
-      return move_to(farest(d, @game.units), {:exclusions=>@game.units})
+      #far_from_unit   = farest(unit, @game.units)
+      #far_destination = farest(far_from_unit, @game.units)
+      #return move_to(far_destination, {:exclusions=>@game.units})
+      # TODO: shortest_path takes a unit, bt we pass an hex
+      return move_to(farest(units, @game.units), {:exclusions=>@game.units})
     end
 
   end # class

@@ -124,10 +124,7 @@ module Weewar
     end
 
     def surrounded_nb(units=nil)
-      if !units
-        factions ||= @game.other_factions
-        units = @game.all_units(factions)
-      end
+      units ||= @game.all_units(@game.other_factions)
       return @game.map.hex_neighbours(self).inject(0) { |sum, h|
         sum += (units.include?(h.unit) or (hex.unit and hex.unit.speed(1) < h.entrance_cost(hex.unit)))? 1 : 0
         }
@@ -154,6 +151,23 @@ module Weewar
 
     def coords
       [@x,@y]
+    end
+
+    def dist_between(b)
+      dx = b.x - @x
+      dy = b.y - @y
+      if (sign(dx) == sign(dy))
+        dist = [dx.abs, dy.abs].max
+      else
+        dist = dx.abs + dy.abs
+      end
+    end
+
+private
+
+    def sign(a)
+      return :minus if a < 0
+      return :plus
     end
 
   end
