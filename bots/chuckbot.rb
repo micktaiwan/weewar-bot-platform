@@ -168,7 +168,7 @@ module Weewar
       # End
       @game.finish_turn
       puts "  Ending turn for game #{@game.name}. Credits: #{my.credits}. Board score: #{board_score}"
-      if(need_to_surrender?)
+      if(false) #need_to_surrender?) # TODO: need to check nb of factions, or else it surrender too easily
         @game.surrender
         @game.chat("OK, this is futile, you won :)")
         puts "!   Surrendering !"
