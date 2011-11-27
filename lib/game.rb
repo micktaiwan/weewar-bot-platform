@@ -260,6 +260,10 @@ module Weewar
       my_bases.find_all{|b| !b.finished? and !b.unit}
     end
 
+    def enemy_on_bases
+      (enemy_bases+neutral_bases).find_all { |b| b.unit and enemy_units.include?(b.unit)}
+    end
+
   end
 
 end

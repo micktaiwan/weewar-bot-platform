@@ -168,9 +168,9 @@ module Weewar
     #   if my_unit.can_reach? the_hex
     #     my_unit.move_to the_hex
     #   end
-    def can_reach?(hex)
-      my_destinations.include? hex
-    end
+    #def can_reach?(hex)
+    #  my_destinations.include? hex
+    #end
 
     # An Array of the Unit s of the Game which are on the same side as this Unit.
     #   friends = my_unit.allied_units
@@ -255,22 +255,25 @@ module Weewar
       raise "**  options is not a Hash" if options.class.name != "Hash"
       command = ""
       options[:exclusions] ||= []
+      options[:exclusions] -= [destination]
       #puts "     destination is #{destination}, #{options[:exclusions].size} exclusions"
 
       moved     = false
       attacked  = false
       captured  = false
-      new_hex = @hex
+      new_hex   = @hex
 
-      if destination != @hex #and !dfa_has_target_in_range(destination)
+      if destination != @hex and !dfa_has_target_in_range(destination)
         # Travel
-
         path = shortest_path(destination, options[:exclusions])
+        # if the destination is occupied, travel one less
+        path.pop if destination.hex.occupied?
+
         #puts "      path: #{path.join(', ')}"
         if !path or path.empty?
           $stderr.puts "*   No path from #{self} to #{destination}"
         else
-          dests = my_destinations
+          dests = my_destinations(allied_units)
           #puts "      dests: #{dests.size}: #{dests.join(', ')}"
           new_dest = path.pop
           while new_dest and not dests.include?(new_dest)
@@ -567,10 +570,6 @@ module Weewar
     # TODO: find a safer place anyway (intersection with a best place to attack and a safe place).
     # If does not exists, well return best place to attack
     def best_place_to_attack(target)
-      # FIXME: my_destinations does not take into account the fact that
-      # there are surrounding enemies
-      # (the movement options are not the same in that case, but I don't know them)
-
       # dfas-like can not attack after moving
       return @hex if dfa_has_target_in_range(target)
 
@@ -614,11 +613,7 @@ module Weewar
     end
 
     def move_away_from(units)
-      d = my_destinations
-      #far_from_unit   = farest(unit, @game.units)
-      #far_destination = farest(far_from_unit, @game.units)
-      #return move_to(far_destination, {:exclusions=>@game.units})
-      # TODO: shortest_path takes a unit, bt we pass an hex
+      # TODO: shortest_path takes a unit, but we pass an hex
       return move_to(farest(units, @game.units), {:exclusions=>@game.units})
     end
 

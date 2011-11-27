@@ -25,7 +25,8 @@ module Weewar
 
       # Move units
       # TODO: make 2 loops on units that didn't move before doing something else
-      units.sort_by{|u| [u.attack_range[0], -u.defense_strength, -u.hp, -u.speed(1)]}.each do |unit|
+      units.sort_by{|u| [u.speed(1)]}.each do |unit|
+       # [u.attack_range[0], -u.defense_strength, -u.hp, -u.speed(1)]
         #next if !unit # useless, but in case we implement the remove myself if dead after attack feature
 
         # After a victorious attack, the enemy is still in the array and therefore
@@ -80,20 +81,12 @@ module Weewar
           # TODO: the capturer to go to the base shall be the nearest,
           # it is not the case as we loop through the capturers first (and then select the nearest base)
           # and not the bases first
-          dest  = unit.nearest(@game.neutral_bases.find_all { |b| !going_to_bases.include?(b)}, enemies)
+          dest  = unit.nearest((@game.neutral_bases + @game.enemy_bases).find_all { |b| !going_to_bases.include?(b)}, enemies)
           if dest
-            moved = unit.move_to(dest,{:exclusions=>enemies, :also_attack=>[]})
+            moved = unit.move_to(dest,{:exclusions=>enemies, :also_attack=>@game.enemy_on_bases})
             if moved
               going_to_bases << dest
-              puts "     gone to neutral base #{dest}"
-            end
-          end
-          if !dest
-            dest  = unit.nearest(@game.enemy_bases.find_all { |b| !going_to_bases.include?(b)}, enemies)
-            moved = unit.move_to(dest,{:exclusions=>enemies, :also_attack=>weakers}) if dest
-            if moved
-              going_to_bases << dest
-              puts "     gone to enemy base #{dest}"
+              puts "     gone to base #{dest}"
             end
           end
           if !dest
@@ -104,7 +97,6 @@ module Weewar
         #elsif(unit.max_range > 1)
         #  unit.find_target_and_safe_place
         end
-
 
         # TODO: attack enemies capturing our base
         # TODO: if we are trying to attack nearest enemy, first use my_targets, it is quicker
@@ -124,14 +116,14 @@ module Weewar
           else
             # TODO: must verify that enemy is in range, otherwise the unit could go very far....
             dest = unit.nearest(attacked, all_others-attacked)
-            dest = nil if unit.dist_between(dest) > unit.speed(1)-1
+            dest = nil if dest and unit.dist_between(dest) > unit.speed(1)-1
             puts("     found attacked: #{dest}") if dest
           end
           if dest
             # FIXME: a :bers can not move to woods so it can not attack the unit there !!!!
             attacked += [dest] if !attacked.include?(dest)
             puts("     #{unit} trying to move to #{dest}")
-            moved = unit.move_to(dest,{:exclusions=>all_others-enemies, :also_attack=>enemies})
+            moved = unit.move_to(dest,{:exclusions=>all_others, :also_attack=>enemies})
             # FIXME: unit.best_place_to_attack(dest)
             puts("     moved ? =>  #{moved}")
           end

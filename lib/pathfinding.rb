@@ -5,7 +5,7 @@ module Weewar
   class Unit
     # An Array of the Hex es which the given Unit can move to in the current turn.
     #   possible_moves = my_unit.destinations
-    def destinations
+    def server_destinations
       xml = XmlSimple.xml_in(@game.send("<movementOptions x='#{x}' y='#{y}' type='#{TYPE_FOR_SYMBOL[@type]}'/>"))
       coords = xml['coordinate']
       if !coords
@@ -22,8 +22,10 @@ module Weewar
       openset     = [from]    # The set of tentative nodes to be evaluated, initially containing the start node
       came_from   = Hash.new # The map of navigated nodes.
       cost        = Hash.new
+      zoc_hash    = Unit.init_zoc_hash(@game)
       possibles   = Array.new
       cost[from]  = 0     # Cost from start along best known path.
+
       mob         = mobility(1)
       while not openset.empty?
         x = openset.sort_by{ |x| cost[x]}.first
@@ -31,7 +33,7 @@ module Weewar
         closedset.push(x)
         for y in x.neighbours
           next if closedset.include?(y)
-          ec = entrance_cost(y)
+          ec = entrance_cost(y, x, zoc_hash)
           next if cost[x]+ec > mob
           if not openset.include?(y)
             openset.push(y)
@@ -45,12 +47,8 @@ module Weewar
     end
 
     def my_destinations(exclusions = [], from=nil)
-      return destinations # FIXME: temporarily as I'm implementing Zone Of Control
-      # http://weewar.wikispaces.com/Zone+of+Control
       my_destinations_and_backchains(exclusions, from)[0]
     end
-
-
 
     #-- ----------------------------------------------
     # Travel
@@ -59,15 +57,27 @@ module Weewar
     # The cost in movement points for the unit to enter the given Hex.  This
     # is an internal method used for travel-related calculations; you should not
     # normally need to use this yourself.
-    def entrance_cost(hex)
-      raise "hex is nil" if hex.nil?
+    def entrance_cost(hex, from, zh)
+      raise "hex is nil"      if hex.nil?
       raise "hex.type is nil" if hex.type.nil?
 
       specs_for_type = Hex.terrain_specs[hex.type]
-      raise "**  No spec for type '#{hex.type}' hex: #{hex}" if specs_for_type.nil?
-      tag(specs_for_type[:movement][unit_class]) { |rv|
-        raise "no movement spec for #{unit_class}" if !rv
-        }
+      raise "**  No spec at all for type '#{hex.type}' from hex: #{hex}" if specs_for_type.nil?
+      rv = specs_for_type[:movement][unit_class]
+      raise "**  No movement spec for #{unit_class}" if !rv
+      rv + zoc_cost(hex, from, zh)
+    end
+
+    def self.init_zoc_hash(game)
+      zoc_hash = Hash.new(false)
+      game.enemy_units.each{|e| e.hex.neighbours.each { |n| zoc_hash[n] = true}}
+      zoc_hash
+    end
+
+    def zoc_cost(hex, from, zoc_hash)
+      # if was already in zoc, can not move to hex
+      return 99 if zoc_hash[from] and zoc_hash[hex]
+      return 0
     end
 
     # The cost in movement points for the unit to travel along the given path.
@@ -96,7 +106,6 @@ module Weewar
     #
     #   best_path = my_trooper.shortest_path(enemy_base)
     def shortest_path(dest, exclusions = [])
-      exclusions ||= []
       reconstruct_path(dest, my_shortest_path(dest, exclusions)) # shortest_paths(exclusions)
     end
 
@@ -117,12 +126,13 @@ module Weewar
       closedset = exclusions.map{ |x| x} # The set of nodes already evaluated. Perform a copy of the array
       openset   = [@hex]    # The set of tentative nodes to be evaluated, initially containing the start node
       came_from = Hash.new # The map of navigated nodes.
+      zoc_hash  = Unit.init_zoc_hash(@game)
       g_score   = Hash.new
       h_score   = Hash.new
       f_score   = Hash.new
 
       g_score[@hex] = 0     # Cost from start along best known path.
-      h_score[@hex] = heuristic_cost_estimate(@hex, goal.hex)
+      h_score[@hex] = heuristic_cost_estimate(@hex, goal, @hex, zoc_hash)
       f_score[@hex] = g_score[@hex] + h_score[@hex]  # Estimated total cost from start to goal through y.
 
       while not openset.empty?
@@ -135,7 +145,7 @@ module Weewar
 
         openset.delete(x)
         closedset.push(x)
-        #x.value = "X "
+        #x.value = ". "
         #x.map.print_map
 
         for y in x.neighbours
@@ -152,7 +162,7 @@ module Weewar
           if tentative_is_better
             came_from[y]  = x
             g_score[y]    = tentative_g_score
-            h_score[y]    = heuristic_cost_estimate(y, goal)
+            h_score[y]    = heuristic_cost_estimate(y, goal, x, zoc_hash)
             f_score[y]    = g_score[y] + h_score[y]
           end
         end
@@ -175,8 +185,8 @@ module Weewar
     #  end
     #end
 
-    def heuristic_cost_estimate(x,y)
-      x.dist_between(y) + entrance_cost(x)
+    def heuristic_cost_estimate(x, goal, from, zoc_hash)
+      x.dist_between(goal) + entrance_cost(x, from, zoc_hash)
     end
 
     # Calculate all shortest paths from the Unit's current Hex to every other
