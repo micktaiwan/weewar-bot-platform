@@ -154,13 +154,15 @@ module Weewar
     end
 
     def dist_between(b)
-      dx = b.x - @x
-      dy = b.y - @y
-      if (sign(dx) == sign(dy))
-        dist = [dx.abs, dy.abs].max
-      else
-        dist = dx.abs + dy.abs
-      end
+      # R0d => D6
+      x0, y0, x1, y1 = @x, @y, b.x, b.y
+      x0 += (y0+1)/2
+      x1 += (y1+1)/2
+      # translation of (X1,Y1) by (-X0,-Y0)
+      dx = x1-x0
+      dy = y1-y0
+      # distance from origin in D6
+      (dx.abs+dy.abs+(dx-dy).abs)/2
     end
 
 private

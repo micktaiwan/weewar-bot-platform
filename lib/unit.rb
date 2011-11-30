@@ -266,13 +266,13 @@ module Weewar
       if destination != @hex and !dfa_has_target_in_range(destination)
         # Travel
         path = shortest_path(destination, options[:exclusions])
-        # if the destination is occupied, travel one less
-        path.pop if destination.hex.occupied?
-
         #puts "      path: #{path.join(', ')}"
         if !path or path.empty?
           $stderr.puts "*   No path from #{self} to #{destination}"
         else
+          # if the destination is occupied, travel one less
+          path.pop if destination.hex.occupied?
+
           dests = my_destinations(allied_units)
           #puts "      dests: #{dests.size}: #{dests.join(', ')}"
           new_dest = path.pop
@@ -606,7 +606,7 @@ module Weewar
       b = nearest(@game.enemy_bases, [])  # no exclusions
       path = n.shortest_path(b, [])
       if path.include?(@hex)
-        puts "!    moving away from #{b} as #{n} could go to it"
+        puts "!    moving away from #{b} as #{n} could go to it dist_between(n)=#{dist_between(n)}"
         return move_away_from([b])
       end
       false

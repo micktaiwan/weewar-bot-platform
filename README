@@ -54,9 +54,9 @@ TODO
 
 ordered by priority
 
+- Unit tests for pathfinding (still errors on move) on real maps and games
 - stop calling helping methods from weewar.com, the bot shall calculate all by itself
 - generate all xml first and send all xml at once to server
-- Can't move ai_ChuckBot: linf@(3,3) to base @ (5,5)
   better movement options. Avoid our unnits or enemies ?
 - test if some paths are made of waters, if the strategy is to make boats
 - test if tere are air fields and if we need planes or not
