@@ -602,7 +602,8 @@ module Weewar
       # take the nearest capturer, calcul its path to nearest base
       # if blocked, move away from base
       n = nearest(capturers, []) # no exclusions
-      return false if dist_between(n) > n.speed(1)-2 # -2 to let space to go away
+      path_size = shortest_path(n, []).size
+      return false if path_size > n.speed(1)-2 # -2 to let space to go away
       b = nearest(@game.enemy_bases, [])  # no exclusions
       path = n.shortest_path(b, [])
       if path.include?(@hex)
