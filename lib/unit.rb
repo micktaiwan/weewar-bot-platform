@@ -618,6 +618,22 @@ module Weewar
       return move_to(farest(units, @game.units), {:exclusions=>@game.units})
     end
 
+    def go_around
+      return false # Temp
+
+      p = unit.least_occupied_point(@game.units)
+      return move_to(p, {:exclusions=>@game.units}) if p
+      return false
+    end
+
+    def least_occupied_point(exclusions)
+      @game.map.least_occupied_points.each { |p|
+        path = shortest_path(p, exclusions)
+        return p if path
+        }
+      return nil
+    end
+
   end # class
 end # module
 

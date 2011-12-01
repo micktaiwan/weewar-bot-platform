@@ -21,7 +21,7 @@ module Weewar
       units         = @game.my_units.find_all { |u| not u.finished? }
 
 
-      # TODO: loop through bsses to take first and then non capturers, marking capturers that moved or not
+      # TODO: loop through basses to take first and then non capturers, marking capturers that moved or not
 
       # Move units
       # TODO: make 2 loops on units that didn't move before doing something else
@@ -159,6 +159,10 @@ module Weewar
           if !moved and unit.hp < 10
             puts "     repairing #{unit}"
             unit.repair
+          end
+          if !moved and unit.hp == 10
+            puts "     going around..."
+            moved = unit.go_around
           end
         end
       end

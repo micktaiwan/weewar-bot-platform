@@ -138,6 +138,10 @@ module Weewar
       find_all { |hex| hex.type == :base }
     end
 
+    def least_occupied_points
+
+    end
+
   end
 end
 
