@@ -621,7 +621,7 @@ module Weewar
     def go_around
       puts "     #{self} going around..."
       p = least_occupied_point(@game.units)
-      puts "p = #{p} for #{self}"
+      puts "      p = #{p} for #{self}"
       #exit
       return move_to(p, {:exclusions=>@game.units}) if p
       return false
