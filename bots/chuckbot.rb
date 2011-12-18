@@ -26,6 +26,10 @@ module Weewar
       # Move units
       # TODO: make 2 loops on units that didn't move before doing something else
       units.sort_by{|u| [u.speed(1)]}.each do |unit|
+        #unit.go_around
+        #exit
+        #next
+
        # [u.attack_range[0], -u.defense_strength, -u.hp, -u.speed(1)]
         #next if !unit # useless, but in case we implement the remove myself if dead after attack feature
 

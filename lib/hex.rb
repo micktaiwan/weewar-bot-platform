@@ -18,13 +18,28 @@ module Weewar
       'Harbor' => :harbour,
       'Mountains' => :mountains,
       'Plains' => :plains,
-      'Repair patch' => :repairshop,
       'Swamp' => :swamp,
       'Water' => :water,
       'Woods' => :woods,
       'Bridge' => :bridge,
+      'Repair patch' => :repairshop,
       'Repairshop' => :repairshop,
     }
+
+
+    TERRAIN_VALUE = {
+      :plains     => 0,
+      :water      => 1,
+      :mountains  => 3,
+      :desert     => 2,
+      :woods      => 2,
+      :swamp      => 2,
+      :base       => 1,
+      :harbour    => 1,
+      :repairshop => 1,
+      :airfield   => 1
+      }
+
 
     # No need to call this yourself.  Hexes are parsed and built
     # by the Map class.
@@ -145,8 +160,26 @@ module Weewar
         }
     end
 
-    def neighbours
-      @game.map.hex_neighbours(self)
+    def neighbours(n=1)
+      return @game.map.hex_neighbours(self) if n == 1
+      return recursive_neighbours(n)
+    end
+
+    def recursive_neighbours(number, rv=[])
+      new_nb = []
+      neighbours.each { |n|
+        if not rv.include?(n)
+          new_nb << n
+          rv << n
+        end
+        }
+      new_nb.each { |n| n.recursive_neighbours(number-1, rv) } if number > 0
+      rv
+    end
+
+    def value
+      raise "no terrain_value for #@type" if !TERRAIN_VALUE[@type]
+      return TERRAIN_VALUE[@type] + (@unit ? 5 : -1)
     end
 
     def coords

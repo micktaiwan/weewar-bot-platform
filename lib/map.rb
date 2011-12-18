@@ -139,7 +139,8 @@ module Weewar
     end
 
     def least_occupied_points
-
+      all_points = @cols.values.map { |col| col.values }.flatten.compact
+      all_points.sort_by { |p| p.value*2 + p.neighbours(3).inject(0) { |sum, n| sum += n.value } }
     end
 
   end

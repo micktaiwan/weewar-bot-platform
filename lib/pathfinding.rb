@@ -123,7 +123,7 @@ module Weewar
     # A* (see wikipedia for pseudo-code)
     def my_shortest_path(goal, exclusions = [])
       time = Time.now
-      closedset = exclusions.map{ |x| x} # The set of nodes already evaluated. Perform a copy of the array
+      closedset = exclusions.map{ |x| x.hex } # The set of nodes already evaluated. Perform a copy of the array
       openset   = [@hex]    # The set of tentative nodes to be evaluated, initially containing the start node
       came_from = Hash.new # The map of navigated nodes.
       zoc_hash  = Unit.init_zoc_hash(@game)

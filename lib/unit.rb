@@ -619,9 +619,10 @@ module Weewar
     end
 
     def go_around
-      return false # Temp
-
-      p = unit.least_occupied_point(@game.units)
+      puts "     #{self} going around..."
+      p = least_occupied_point(@game.units)
+      puts "p = #{p} for #{self}"
+      #exit
       return move_to(p, {:exclusions=>@game.units}) if p
       return false
     end
@@ -629,6 +630,8 @@ module Weewar
     def least_occupied_point(exclusions)
       @game.map.least_occupied_points.each { |p|
         path = shortest_path(p, exclusions)
+        #puts path.join(", ")
+        #exit
         return p if path
         }
       return nil
